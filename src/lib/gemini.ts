@@ -166,7 +166,92 @@ export const PERSONA_CONFIG: Record<PersonaType, {
   }
 };
 
-export async function callGeminiAPI(
+function resolveOpenRouterModel(model: string): string {
+  if (model.includes('/')) return model;
+  if (model.includes('2.0') || model.includes('exp')) {
+    return 'google/gemini-2.0-flash-exp:free';
+  }
+  if (model.includes('pro')) {
+    return 'google/gemini-pro-1.5';
+  }
+  return 'google/gemini-flash-1.5';
+}
+
+function callOpenRouterAPI(
+  apiKey: string,
+  prompt: string,
+  systemInstruction = '',
+  model = 'gemini-1.5-flash'
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const resolvedModel = resolveOpenRouterModel(model);
+    const messages: Array<{ role: 'system' | 'user'; content: string }> = [];
+    if (systemInstruction) {
+      messages.push({ role: 'system', content: systemInstruction });
+    }
+    messages.push({ role: 'user', content: prompt });
+
+    const payload = JSON.stringify({
+      model: resolvedModel,
+      messages,
+      temperature: 0.2,
+      max_tokens: 2500
+    });
+
+    const options = {
+      hostname: 'openrouter.ai',
+      port: 443,
+      path: '/api/v1/chat/completions',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://civic-air-quality-briefing-studio.vercel.app',
+        'X-Title': 'Civic Air Quality Briefing Studio',
+        'Content-Length': Buffer.byteLength(payload)
+      },
+      timeout: 30000
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+            const text = json.choices?.[0]?.message?.content;
+            if (text) {
+              resolve(text);
+            } else {
+              reject(new Error('Empty candidate response from OpenRouter API'));
+            }
+          } else {
+            const errMsg = json.error?.message || json.message || `OpenRouter API error with status ${res.statusCode}`;
+            reject(new Error(errMsg));
+          }
+        } catch (e: unknown) {
+          const message = e instanceof Error ? e.message : 'Unknown parse error';
+          reject(new Error(`Failed to parse OpenRouter API response: ${message}`));
+        }
+      });
+    });
+
+    req.on('error', (err) => {
+      reject(new Error(`Network error calling OpenRouter API: ${err.message}`));
+    });
+
+    req.on('timeout', () => {
+      req.destroy();
+      reject(new Error('Timeout waiting for OpenRouter API response'));
+    });
+
+    req.write(payload);
+    req.end();
+  });
+}
+
+function callGoogleGeminiAPI(
   apiKey: string,
   prompt: string,
   systemInstruction = '',
@@ -240,6 +325,19 @@ export async function callGeminiAPI(
   });
 }
 
+export async function callGeminiAPI(
+  apiKey: string,
+  prompt: string,
+  systemInstruction = '',
+  model = 'gemini-1.5-flash'
+): Promise<string> {
+  const isOpenRouter = apiKey.startsWith('sk-or-') || Boolean(process.env.OPENROUTER_API_KEY);
+  if (isOpenRouter) {
+    return await callOpenRouterAPI(apiKey, prompt, systemInstruction, model);
+  }
+  return await callGoogleGeminiAPI(apiKey, prompt, systemInstruction, model);
+}
+
 export async function generateCivicBrief(
   parsedData: ParsedDataSet,
   options: {
@@ -254,7 +352,7 @@ export async function generateCivicBrief(
     persona = 'ward_officer',
     language = 'en',
     readingLevel = 'general',
-    apiKey = process.env.GEMINI_API_KEY || null,
+    apiKey = process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY || null,
     model = 'gemini-1.5-flash'
   } = options;
 
@@ -433,16 +531,20 @@ STRICT INSTRUCTIONS:
           briefResult.citizenAdvisory.sections.sensitive.tips = aiJson.sensitiveGroupsAdvice;
         }
 
-        briefResult.aiModelUsed = `Google Gemini (${model})`;
+        const isOR = Boolean(apiKey?.startsWith('sk-or-')) || Boolean(process.env.OPENROUTER_API_KEY);
+        const resolvedLabel = isOR ? `OpenRouter (${resolveOpenRouterModel(model)})` : `Google Gemini (${model})`;
+        briefResult.aiModelUsed = resolvedLabel;
         briefResult.isAiEnriched = true;
       } catch {
+        const isOR = Boolean(apiKey?.startsWith('sk-or-')) || Boolean(process.env.OPENROUTER_API_KEY);
+        const resolvedLabel = isOR ? `OpenRouter (${resolveOpenRouterModel(model)})` : `Google Gemini (${model})`;
         briefResult.internalBriefingNote.executiveSummary = aiResponseText.slice(0, 800);
-        briefResult.aiModelUsed = `Google Gemini (${model}) - Text Synthesis`;
+        briefResult.aiModelUsed = `${resolvedLabel} - Text Synthesis`;
       }
     } catch (apiErr: unknown) {
       const message = apiErr instanceof Error ? apiErr.message : 'API call error';
-      console.warn('Gemini API call failed, fell back to Civic Intelligence Rule Engine:', message);
-      briefResult.aiModelUsed = `Civic Intelligence Rule Engine (Gemini fallback: ${message})`;
+      console.warn('AI API call failed, fell back to Civic Intelligence Rule Engine:', message);
+      briefResult.aiModelUsed = `Civic Intelligence Rule Engine (AI fallback: ${message})`;
       briefResult.geminiError = message;
     }
   }
@@ -453,7 +555,7 @@ STRICT INSTRUCTIONS:
 export async function answerBriefQuestion(
   brief: CivicBrief,
   question: string,
-  apiKey: string | null = process.env.GEMINI_API_KEY || null
+  apiKey: string | null = process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY || null
 ): Promise<string> {
   if (!apiKey) {
     const qLower = question.toLowerCase();

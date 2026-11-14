@@ -48,8 +48,8 @@ export async function POST(req: NextRequest) {
 
     // Sanitize API key if provided
     let safeApiKey: string | null = null;
-    if (apiKey && typeof apiKey === 'string' && apiKey.trim().length > 0 && apiKey.length < 200) {
-      safeApiKey = apiKey.trim().replace(/[^\w-]/g, '');
+    if (apiKey && typeof apiKey === 'string' && apiKey.trim().length > 0 && apiKey.length < 256) {
+      safeApiKey = apiKey.trim().replace(/[^a-zA-Z0-9_\-\.]/g, '');
     }
 
     // 1. Parse messy tabular data & audit anomalies
@@ -64,14 +64,22 @@ export async function POST(req: NextRequest) {
     // 2. Fetch baseline or previous brief for comparison
     const latestBrief = getLatestBrief();
 
-    // 3. Generate Civic Intelligence Brief (Gemini AI + Rule Engine fallback)
-    const effectiveApiKey = safeApiKey || process.env.GEMINI_API_KEY || null;
+    // 3. Generate Civic Intelligence Brief (Gemini AI / OpenRouter + Rule Engine fallback)
+    const effectiveApiKey =
+      safeApiKey ||
+      process.env.GEMINI_API_KEY ||
+      process.env.OPENROUTER_API_KEY ||
+      process.env.OPEN_ROUTER_API_KEY ||
+      null;
+
     const brief = await generateCivicBrief(parsedData, {
       persona: safePersona,
       language: safeLanguage,
       readingLevel: safeReadingLevel,
       apiKey: effectiveApiKey,
-      model: typeof model === 'string' && model.startsWith('gemini') ? model : 'gemini-1.5-flash'
+      model: typeof model === 'string' && (model.startsWith('gemini') || model.includes('/') || model.includes('google'))
+        ? model
+        : 'gemini-1.5-flash'
     });
 
     // 4. Compare with previous brief

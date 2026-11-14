@@ -69,13 +69,13 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
               <Key className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="api-modal-title" className="text-base font-bold text-white">Google Gemini AI Configuration</h2>
-              <p className="text-xs text-slate-400">Enables advanced generative plain-language summaries</p>
+              <h2 id="api-modal-title" className="text-base font-bold text-white">AI Intelligence Configuration</h2>
+              <p className="text-xs text-slate-400">Supports Google Gemini API & OpenRouter</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            aria-label="Close Gemini configuration dialog"
+            aria-label="Close AI configuration dialog"
             className="text-slate-400 hover:text-white p-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
           >
             <X className="w-5 h-5" aria-hidden="true" />
@@ -85,18 +85,18 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
         <div className="space-y-4">
           <div>
             <label htmlFor="gemini-key-input" className="text-xs font-semibold text-slate-300 block mb-1.5">
-              Google Gemini API Key
+              API Key (Google Gemini or OpenRouter)
             </label>
             <input
               id="gemini-key-input"
               type="password"
               value={localKey}
               onChange={(e) => setLocalKey(e.target.value)}
-              placeholder="AIzaSy..."
+              placeholder="AIzaSy... or sk-or-v1-..."
               className="w-full bg-slate-950 text-xs text-white border border-slate-800 rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 font-mono"
             />
             <p className="text-[11px] text-slate-500 mt-1">
-              Your key is saved locally in your browser storage and never stored on third-party servers.
+              Supports Google AI Studio (<code>AIzaSy...</code>) and OpenRouter (<code>sk-or-v1-...</code>). Stored locally in your browser.
             </p>
           </div>
 
@@ -111,15 +111,17 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
               className="w-full bg-slate-950 text-xs text-white border border-slate-800 rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
             >
               <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ultra Fast & Grounded)</option>
-              <option value="gemini-2.0-flash">Gemini 2.0 Flash (Next-Gen High Speed)</option>
+              <option value="gemini-2.0-flash">Gemini 2.0 Flash (Next-Gen High Speed / Free Tier)</option>
               <option value="gemini-1.5-pro">Gemini 1.5 Pro (Deepest Context Reasoning)</option>
+              <option value="google/gemini-2.0-flash-exp:free">OpenRouter: Gemini 2.0 Flash (Free)</option>
+              <option value="google/gemini-flash-1.5">OpenRouter: Gemini 1.5 Flash</option>
             </select>
           </div>
 
           <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 flex items-start gap-2 text-xs text-slate-400">
             <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" aria-hidden="true" />
             <span>
-              <strong>Zero-Configuration Fallback:</strong> If no Gemini key is provided, the studio runs our native deterministic Civic Intelligence Engine so all briefs, calculations, and recommendations work seamlessly.
+              <strong>Zero-Configuration Fallback:</strong> If no API key is provided, the studio runs our native deterministic Civic Intelligence Engine so all briefs, calculations, and recommendations work seamlessly.
             </span>
           </div>
         </div>

@@ -31,11 +31,17 @@ export async function POST(req: NextRequest) {
     }
 
     let safeApiKey: string | null = null;
-    if (apiKey && typeof apiKey === 'string' && apiKey.trim().length > 0 && apiKey.length < 200) {
-      safeApiKey = apiKey.trim().replace(/[^\w-]/g, '');
+    if (apiKey && typeof apiKey === 'string' && apiKey.trim().length > 0 && apiKey.length < 256) {
+      safeApiKey = apiKey.trim().replace(/[^a-zA-Z0-9_\-\.]/g, '');
     }
 
-    const effectiveApiKey = safeApiKey || process.env.GEMINI_API_KEY || null;
+    const effectiveApiKey =
+      safeApiKey ||
+      process.env.GEMINI_API_KEY ||
+      process.env.OPENROUTER_API_KEY ||
+      process.env.OPEN_ROUTER_API_KEY ||
+      null;
+
     const answer = await answerBriefQuestion(brief, trimmedQuestion, effectiveApiKey);
 
     return NextResponse.json({
