@@ -9,7 +9,7 @@ interface KpiMetricsProps {
   onRowClick?: (rowIndex: number) => void;
 }
 
-export const KpiMetrics: React.FC<KpiMetricsProps> = ({ brief, onRowClick }) => {
+const KpiMetricsComponent: React.FC<KpiMetricsProps> = ({ brief, onRowClick }) => {
   const sum = brief.summary;
 
   return (
@@ -114,3 +114,5 @@ export const KpiMetrics: React.FC<KpiMetricsProps> = ({ brief, onRowClick }) => 
     </div>
   );
 };
+
+export const KpiMetrics = React.memo(KpiMetricsComponent);

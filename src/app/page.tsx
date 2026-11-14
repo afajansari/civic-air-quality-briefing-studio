@@ -1,18 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { Header } from '@/components/Header';
 import { DataIngestion } from '@/components/DataIngestion';
 import { PersonaConfigBar } from '@/components/PersonaConfigBar';
 import { KpiMetrics } from '@/components/KpiMetrics';
-import { AirQualityCharts } from '@/components/AirQualityCharts';
 import { DataIntegrityPanel } from '@/components/DataIntegrityPanel';
 import { BriefingNoteTab } from '@/components/BriefingNoteTab';
 import { CitizenAdvisoryTab } from '@/components/CitizenAdvisoryTab';
-import { TraceabilityTable } from '@/components/TraceabilityTable';
-import { BriefComparisonModal } from '@/components/BriefComparisonModal';
-import { AiChatAssistant } from '@/components/AiChatAssistant';
-import { ApiKeyModal } from '@/components/ApiKeyModal';
 import { AUTHENTIC_DATASETS, DatasetPreset } from '@/lib/authentic-datasets';
 import {
   AqiStandard,
@@ -22,6 +18,44 @@ import {
   PersonaType,
   ReadingLevel
 } from '@/types';
+
+// Code-splitting & dynamic imports for performance optimization
+const AirQualityCharts = dynamic(
+  () => import('@/components/AirQualityCharts').then(m => m.AirQualityCharts),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="h-64 rounded-2xl bg-slate-900 border border-slate-800 animate-pulse" />
+        <div className="h-64 rounded-2xl bg-slate-900 border border-slate-800 animate-pulse" />
+      </div>
+    )
+  }
+);
+
+const TraceabilityTable = dynamic(
+  () => import('@/components/TraceabilityTable').then(m => m.TraceabilityTable),
+  {
+    loading: () => <div className="h-96 rounded-2xl bg-slate-900 border border-slate-800 animate-pulse" />
+  }
+);
+
+const AiChatAssistant = dynamic(
+  () => import('@/components/AiChatAssistant').then(m => m.AiChatAssistant),
+  {
+    loading: () => <div className="h-48 rounded-2xl bg-slate-900 border border-slate-800 animate-pulse" />
+  }
+);
+
+const BriefComparisonModal = dynamic(
+  () => import('@/components/BriefComparisonModal').then(m => m.BriefComparisonModal),
+  { ssr: false }
+);
+
+const ApiKeyModal = dynamic(
+  () => import('@/components/ApiKeyModal').then(m => m.ApiKeyModal),
+  { ssr: false }
+);
 import {
   FileText,
   Heart,
@@ -34,7 +68,6 @@ import {
   AlertTriangle,
   Loader2
 } from 'lucide-react';
-import { useCallback } from 'react';
 
 interface SavedBriefMeta {
   id: string;

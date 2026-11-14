@@ -9,7 +9,7 @@ interface DataIntegrityPanelProps {
   onSelectAnomaly?: (rowIndex: number) => void;
 }
 
-export const DataIntegrityPanel: React.FC<DataIntegrityPanelProps> = ({ brief, onSelectAnomaly }) => {
+const DataIntegrityPanelComponent: React.FC<DataIntegrityPanelProps> = ({ brief, onSelectAnomaly }) => {
   const anomalies = brief.anomalies || [];
   const gaps = brief.dataGaps || [];
 
@@ -112,3 +112,5 @@ export const DataIntegrityPanel: React.FC<DataIntegrityPanelProps> = ({ brief, o
     </div>
   );
 };
+
+export const DataIntegrityPanel = React.memo(DataIntegrityPanelComponent);

@@ -15,7 +15,7 @@ interface PersonaConfigBarProps {
   setReadingLevel: (r: ReadingLevel) => void;
 }
 
-export const PersonaConfigBar: React.FC<PersonaConfigBarProps> = ({
+const PersonaConfigBarComponent: React.FC<PersonaConfigBarProps> = ({
   persona,
   setPersona,
   standard,
@@ -155,3 +155,5 @@ export const PersonaConfigBar: React.FC<PersonaConfigBarProps> = ({
     </section>
   );
 };
+
+export const PersonaConfigBar = React.memo(PersonaConfigBarComponent);
