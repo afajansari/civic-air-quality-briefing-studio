@@ -110,11 +110,17 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
               onChange={(e) => setSelectedModel(e.target.value)}
               className="w-full bg-slate-950 text-xs text-white border border-slate-800 rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
             >
-              <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ultra Fast & Grounded)</option>
-              <option value="gemini-2.0-flash">Gemini 2.0 Flash (Next-Gen High Speed / Free Tier)</option>
-              <option value="gemini-1.5-pro">Gemini 1.5 Pro (Deepest Context Reasoning)</option>
-              <option value="google/gemini-2.0-flash-exp:free">OpenRouter: Gemini 2.0 Flash (Free)</option>
-              <option value="google/gemini-flash-1.5">OpenRouter: Gemini 1.5 Flash</option>
+              <optgroup label="OpenRouter Active Models (Recommended)">
+                <option value="google/gemini-2.5-flash">Gemini 2.5 Flash (Fast, Latest Active)</option>
+                <option value="google/gemini-2.5-flash-lite">Gemini 2.5 Flash Lite (Ultra Low-Cost)</option>
+                <option value="google/gemini-2.5-pro">Gemini 2.5 Pro (Deep Context)</option>
+                <option value="openrouter/free">OpenRouter: Free Model Router</option>
+              </optgroup>
+              <optgroup label="Google AI Studio Direct">
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash (Google AI Studio)</option>
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash (Google AI Studio)</option>
+                <option value="gemini-1.5-pro">Gemini 1.5 Pro (Google AI Studio)</option>
+              </optgroup>
             </select>
           </div>
 

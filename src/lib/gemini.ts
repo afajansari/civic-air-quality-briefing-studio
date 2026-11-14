@@ -167,21 +167,28 @@ export const PERSONA_CONFIG: Record<PersonaType, {
 };
 
 function resolveOpenRouterModel(model: string): string {
-  if (model.includes('/')) return model;
-  if (model.includes('2.0') || model.includes('exp')) {
-    return 'google/gemini-2.0-flash-exp:free';
+  if (model.includes('/')) {
+    // If an obsolete or sunset model was requested, automatically upgrade to active 2.5
+    if (model.includes('gemini-flash-1.5') || model.includes('gemini-2.0-flash-exp')) {
+      return 'google/gemini-2.5-flash';
+    }
+    return model;
+  }
+  if (model.includes('lite')) {
+    return 'google/gemini-2.5-flash-lite';
   }
   if (model.includes('pro')) {
-    return 'google/gemini-pro-1.5';
+    return 'google/gemini-2.5-pro';
   }
-  return 'google/gemini-flash-1.5';
+  // Standard active Gemini Flash model on OpenRouter
+  return 'google/gemini-2.5-flash';
 }
 
 function callOpenRouterAPI(
   apiKey: string,
   prompt: string,
   systemInstruction = '',
-  model = 'gemini-1.5-flash'
+  model = 'google/gemini-2.5-flash'
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const resolvedModel = resolveOpenRouterModel(model);
@@ -227,7 +234,14 @@ function callOpenRouterAPI(
               reject(new Error('Empty candidate response from OpenRouter API'));
             }
           } else {
+            // Automatic fallback if requested model is unavailable on OpenRouter
             const errMsg = json.error?.message || json.message || `OpenRouter API error with status ${res.statusCode}`;
+            if (errMsg.includes('no provider serves this model') && resolvedModel !== 'google/gemini-2.5-flash-lite') {
+              callOpenRouterAPI(apiKey, prompt, systemInstruction, 'google/gemini-2.5-flash-lite')
+                .then(resolve)
+                .catch(reject);
+              return;
+            }
             reject(new Error(errMsg));
           }
         } catch (e: unknown) {
@@ -257,6 +271,10 @@ function callGoogleGeminiAPI(
   systemInstruction = '',
   model = 'gemini-1.5-flash'
 ): Promise<string> {
+  const safeGoogleModel = model.startsWith('google/')
+    ? (model.includes('pro') ? 'gemini-1.5-pro' : 'gemini-1.5-flash')
+    : model;
+
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify({
       contents: [
@@ -278,7 +296,7 @@ function callGoogleGeminiAPI(
     const options = {
       hostname: 'generativelanguage.googleapis.com',
       port: 443,
-      path: `/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      path: `/v1beta/models/${safeGoogleModel}:generateContent?key=${apiKey}`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
