@@ -15,6 +15,7 @@ interface Atmospheric3DChamberProps {
   stationName: string;
   simulatedReductionPct?: number;
   activeHour?: number;
+  showHeader?: boolean;
   className?: string;
 }
 
@@ -45,6 +46,7 @@ export function Atmospheric3DChamber({
   stationName,
   simulatedReductionPct = 0,
   activeHour = 12,
+  showHeader = false,
   className = '',
 }: Atmospheric3DChamberProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -487,9 +489,128 @@ export function Atmospheric3DChamber({
 
   const aqiCategory = getCpcbLabel(effectiveAqi);
 
+  const renderControls = (
+    <div className="flex items-center gap-1 p-1 rounded-lg subtle-glass shadow-lg z-10">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => setIsRotating((prev) => !prev)}
+        className="h-6 px-2 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+        title={isRotating ? 'Pause auto-rotation' : 'Resume auto-rotation'}
+      >
+        {isRotating ? <Pause className="size-3" /> : <Play className="size-3" />}
+        <span className="hidden sm:inline">{isRotating ? 'Pause' : 'Rotate'}</span>
+      </Button>
+
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => setShowInversion((prev) => !prev)}
+        className={`h-6 px-2 text-[10px] gap-1 ${
+          showInversion ? 'bg-primary/20 text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
+        }`}
+        title="Toggle nocturnal thermal inversion capping layer"
+      >
+        <Layers className="size-3" />
+        <span className="hidden sm:inline">Inversion ({inversionCeilingY * 40}m)</span>
+      </Button>
+
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => setShowWind((prev) => !prev)}
+        className={`h-6 px-2 text-[10px] gap-1 ${
+          showWind ? 'bg-primary/20 text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
+        }`}
+        title="Toggle ambient wind shear dispersion"
+      >
+        <Wind className="size-3" />
+        <span className="hidden sm:inline">Wind</span>
+      </Button>
+
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => setShowHumidity((prev) => !prev)}
+        className={`h-6 px-2 text-[10px] gap-1 ${
+          showHumidity ? 'bg-primary/20 text-primary font-bold' : 'text-muted-foreground hover:text-foreground'
+        }`}
+        title="Toggle high humidity / radiation fog condensation"
+      >
+        <Droplets className="size-3" />
+        <span className="hidden sm:inline">Fog/Mist</span>
+      </Button>
+
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={handleResetCamera}
+        className="h-6 px-2 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+        title="Reset 3D camera orientation"
+      >
+        <RotateCcw className="size-3" />
+        <span className="hidden sm:inline">Reset</span>
+      </Button>
+    </div>
+  );
+
+  if (!showHeader) {
+    return (
+      <div className={`relative w-full h-[380px] sm:h-[440px] bg-[#090a0c] overflow-hidden ${className}`}>
+        {/* Three.js Canvas Container */}
+        <div
+          ref={containerRef}
+          className="w-full h-full cursor-grab active:cursor-grabbing bg-[#090a0c]"
+          style={{ touchAction: 'none' }}
+        />
+
+        {/* Floating 3D Action Controls (Bottom Right - Above Scrubber, Zero Collision) */}
+        <div className="absolute bottom-2.5 right-3 z-10 hidden sm:block">
+          {renderControls}
+        </div>
+
+        {/* Atmospheric Telemetry Badges (Bottom Left) */}
+        <div className="absolute bottom-2.5 left-3 flex flex-wrap items-center gap-1.5 pointer-events-none text-[10px] font-mono z-10">
+          <span className="subtle-glass px-2 py-0.5 rounded text-muted-foreground">
+            Drag: Rotate • Wheel: Zoom
+          </span>
+          <span className="subtle-glass px-2 py-0.5 rounded text-foreground font-bold tabular-nums">
+            Visibility: {visibilityEstimate.distance} ({visibilityEstimate.rating})
+          </span>
+          <span className="subtle-glass px-2 py-0.5 rounded text-muted-foreground tabular-nums">
+            PM2.5: {pm25} µg/m³ • PM10: {pm10} µg/m³
+          </span>
+          {simulatedReductionPct > 0 && (
+            <span className="bg-primary/20 backdrop-blur-md px-2 py-0.5 rounded border border-primary/40 text-primary font-bold">
+              -{simulatedReductionPct}% Attenuation
+            </span>
+          )}
+        </div>
+
+        {/* Solar Transmission & WebGL Frame Indicator (Top Center - Zero Collision) */}
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 pointer-events-none text-[10px] font-mono subtle-glass px-2.5 py-0.5 rounded-full text-muted-foreground items-center gap-2 z-10 hidden lg:flex">
+          <span className="flex items-center gap-1 text-amber-400 font-bold tabular-nums">
+            <Sun className="size-3" />
+            <span>Solar: {solarTransmissionPct}%</span>
+          </span>
+          <span>•</span>
+          <span className="flex items-center gap-1">
+            <Eye className="size-3 text-primary" />
+            <span>60 FPS WebGL</span>
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Card className={`border-border bg-card text-card-foreground shadow-sm overflow-hidden flex flex-col ${className}`}>
-      {/* 3D Header & Atmospheric Controls */}
+      {/* Standalone 3D Header & Atmospheric Controls */}
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 gap-3 border-b border-border/60">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
@@ -509,74 +630,7 @@ export function Atmospheric3DChamber({
           </CardDescription>
         </div>
 
-        {/* 3D Atmospheric Action Controls */}
-        <div className="flex flex-wrap items-center gap-1.5 shrink-0">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setIsRotating((prev) => !prev)}
-            className="h-7 px-2 text-xs gap-1 border-border bg-background hover:bg-accent"
-            title={isRotating ? 'Pause auto-rotation' : 'Resume auto-rotation'}
-          >
-            {isRotating ? <Pause className="size-3" /> : <Play className="size-3" />}
-            <span className="hidden md:inline">{isRotating ? 'Pause' : 'Rotate'}</span>
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setShowInversion((prev) => !prev)}
-            className={`h-7 px-2 text-xs gap-1 border-border ${
-              showInversion ? 'bg-accent text-accent-foreground font-semibold' : 'bg-background text-muted-foreground'
-            }`}
-            title="Toggle nocturnal thermal inversion capping layer"
-          >
-            <Layers className="size-3" />
-            <span className="hidden md:inline">Inversion ({inversionCeilingY * 40}m)</span>
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setShowWind((prev) => !prev)}
-            className={`h-7 px-2 text-xs gap-1 border-border ${
-              showWind ? 'bg-accent text-accent-foreground font-semibold' : 'bg-background text-muted-foreground'
-            }`}
-            title="Toggle ambient wind shear dispersion"
-          >
-            <Wind className="size-3" />
-            <span className="hidden md:inline">Wind</span>
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setShowHumidity((prev) => !prev)}
-            className={`h-7 px-2 text-xs gap-1 border-border ${
-              showHumidity ? 'bg-accent text-accent-foreground font-semibold' : 'bg-background text-muted-foreground'
-            }`}
-            title="Toggle high humidity / radiation fog condensation"
-          >
-            <Droplets className="size-3" />
-            <span className="hidden md:inline">Fog/Mist</span>
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleResetCamera}
-            className="h-7 px-2 text-xs gap-1 border-border bg-background hover:bg-accent"
-            title="Reset 3D camera orientation"
-          >
-            <RotateCcw className="size-3" />
-            <span className="hidden md:inline">Reset</span>
-          </Button>
-        </div>
+        {renderControls}
       </CardHeader>
 
       <CardContent className="p-0 relative">

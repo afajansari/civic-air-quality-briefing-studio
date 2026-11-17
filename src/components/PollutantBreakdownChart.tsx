@@ -119,24 +119,24 @@ export function PollutantBreakdownChart({ currentTelemetry }: PollutantBreakdown
   return (
     <Card className="border-border bg-card text-card-foreground shadow-sm overflow-hidden">
       <CardHeader className="flex flex-col gap-2 pb-2.5 border-b border-border/50">
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <BarChart3 className="size-4 text-primary shrink-0" />
             <CardTitle className="text-sm font-semibold tracking-wide truncate">
-              CPCB NAAQS Criteria Standard Compliance
+              CPCB NAAQS Criteria Compliance
             </CardTitle>
           </div>
 
           <div className="shrink-0">
             {exceededCount > 0 ? (
-              <Badge variant="destructive" className="text-xs gap-1">
-                <AlertCircle className="size-3" />
-                {exceededCount} Exceeded
+              <Badge variant="destructive" className="text-xs gap-1.5 whitespace-nowrap shrink-0">
+                <AlertCircle className="size-3 shrink-0" />
+                <span>{exceededCount} Exceeded</span>
               </Badge>
             ) : (
-              <Badge variant="secondary" className="text-xs gap-1 border-primary/30 text-primary">
-                <ShieldCheck className="size-3" />
-                All Criteria Compliant
+              <Badge variant="secondary" className="text-xs gap-1.5 border-primary/30 text-primary whitespace-nowrap shrink-0">
+                <ShieldCheck className="size-3 shrink-0" />
+                <span>All Compliant</span>
               </Badge>
             )}
           </div>
@@ -148,7 +148,7 @@ export function PollutantBreakdownChart({ currentTelemetry }: PollutantBreakdown
       </CardHeader>
 
       <CardContent className="pt-3 flex flex-col gap-3">
-        <ChartContainer config={breakdownConfig} className="h-52 w-full min-w-0">
+        <ChartContainer config={breakdownConfig} className="h-48 w-full min-w-0">
           <BarChart data={chartData} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
             <XAxis
@@ -204,6 +204,28 @@ export function PollutantBreakdownChart({ currentTelemetry }: PollutantBreakdown
             </Bar>
           </BarChart>
         </ChartContainer>
+
+        {/* Proportional Criteria Pollutant Ratio Summary Strip */}
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 pt-1.5 border-t border-border/40 text-[10px] font-mono">
+          {chartData.map((d) => (
+            <div
+              key={d.pollutant}
+              className="flex flex-col items-center justify-center p-1.5 rounded-lg bg-muted/20 border border-border/40 text-center gap-0.5 min-w-0"
+            >
+              <span className="font-extrabold text-foreground truncate">{d.pollutant}</span>
+              <span className="text-muted-foreground tabular-nums text-[9px] truncate">
+                {d.value} {d.unit}
+              </span>
+              <span
+                className={`font-bold tabular-nums text-[10px] ${
+                  d.isExceeded ? "text-destructive" : "text-primary"
+                }`}
+              >
+                {d.pct}%
+              </span>
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   )

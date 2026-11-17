@@ -120,7 +120,8 @@ export function AirQualityTrendChart({
   return (
     <Card className="border-border bg-card text-card-foreground shadow-sm overflow-hidden">
       <CardHeader className="flex flex-col gap-2 pb-2.5 border-b border-border/50">
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        {/* Row 1: Title & Live AQI Badge */}
+        <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <Activity className="size-4 text-primary shrink-0" />
             <CardTitle className="text-sm font-semibold tracking-wide truncate">
@@ -128,43 +129,46 @@ export function AirQualityTrendChart({
             </CardTitle>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            {latestAqi != null && (
-              <Badge variant="outline" className="text-[10px] font-mono border-primary/40 text-primary">
-                Live AQI: {latestAqi}
-              </Badge>
-            )}
-
-            {/* Time Horizon Selector */}
-            <div className="flex items-center gap-1.5">
-              <Clock className="size-3 text-muted-foreground" />
-              <ToggleGroup
-                type="single"
-                value={timeRange}
-                onValueChange={(val) => {
-                  if (val) setTimeRange(val as "24" | "48" | "72")
-                }}
-                variant="outline"
-                size="sm"
-                className="bg-background/50 border border-border/60 rounded-md p-0.5 h-6"
-              >
-                <ToggleGroupItem value="24" className="px-2 py-0.5 text-[10px] h-5">
-                  24h
-                </ToggleGroupItem>
-                <ToggleGroupItem value="48" className="px-2 py-0.5 text-[10px] h-5">
-                  48h
-                </ToggleGroupItem>
-                <ToggleGroupItem value="72" className="px-2 py-0.5 text-[10px] h-5">
-                  72h
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </div>
-          </div>
+          {latestAqi != null && (
+            <Badge
+              variant="outline"
+              className="text-[10px] font-mono border-primary/40 text-primary whitespace-nowrap shrink-0"
+            >
+              Live AQI: {latestAqi}
+            </Badge>
+          )}
         </div>
 
-        <CardDescription className="text-xs text-muted-foreground truncate">
-          {stationName || city} • Criteria particulate trend and regulatory threshold boundaries
-        </CardDescription>
+        {/* Row 2: Subtitle Description & Time Horizon Toggles */}
+        <div className="flex items-center justify-between gap-2 pt-0.5">
+          <CardDescription className="text-xs text-muted-foreground truncate">
+            {stationName || city} • Criteria particulate curves
+          </CardDescription>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Clock className="size-3 text-muted-foreground shrink-0" />
+            <ToggleGroup
+              type="single"
+              value={timeRange}
+              onValueChange={(val) => {
+                if (val) setTimeRange(val as "24" | "48" | "72")
+              }}
+              variant="outline"
+              size="sm"
+              className="bg-background/50 border border-border/60 rounded-md p-0.5 h-6 shrink-0"
+            >
+              <ToggleGroupItem value="24" className="px-2 py-0.5 text-[10px] h-5">
+                24h
+              </ToggleGroupItem>
+              <ToggleGroupItem value="48" className="px-2 py-0.5 text-[10px] h-5">
+                48h
+              </ToggleGroupItem>
+              <ToggleGroupItem value="72" className="px-2 py-0.5 text-[10px] h-5">
+                72h
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+        </div>
       </CardHeader>
 
       <CardContent className="pt-3 flex flex-col gap-3">

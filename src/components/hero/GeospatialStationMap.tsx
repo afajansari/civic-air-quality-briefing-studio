@@ -12,6 +12,7 @@ interface GeospatialStationMapProps {
   currentCity: string;
   activeAqi: number;
   onSelectStation: (cityName: string) => void;
+  showHeader?: boolean;
   className?: string;
 }
 
@@ -43,6 +44,7 @@ export function GeospatialStationMap({
   currentCity,
   activeAqi,
   onSelectStation,
+  showHeader = false,
   className = '',
 }: GeospatialStationMapProps) {
   const [selectedRegion, setSelectedRegion] = useState<string>('All');
@@ -55,6 +57,248 @@ export function GeospatialStationMap({
   }, [selectedRegion]);
 
   const activeColor = getCpcbColor(activeAqi);
+
+  const renderLayerControls = (
+    <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-lg subtle-glass shadow-lg z-10">
+      {/* Layer Switcher */}
+      <div className="flex items-center p-0.5 rounded-md bg-muted/60 border border-border text-xs">
+        <Button
+          type="button"
+          variant={mapLayer === 'boundaries' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setMapLayer('boundaries')}
+          className="h-6 px-2 text-[10px] gap-1 font-medium"
+          title="Cartographic Political & Municipal Boundaries"
+        >
+          <MapIcon className="size-3" />
+          <span>Vector</span>
+        </Button>
+        <Button
+          type="button"
+          variant={mapLayer === 'aod' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setMapLayer('aod')}
+          className="h-6 px-2 text-[10px] gap-1 font-medium"
+          title="Satellite Aerosol Optical Depth (AOD) Thermal Smog Plume"
+        >
+          <Satellite className="size-3" />
+          <span>AOD Plume</span>
+        </Button>
+      </div>
+
+      {/* Regional Filter Chips */}
+      <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
+        {['All', 'NCR', 'West', 'South', 'North & East'].map((reg) => (
+          <Button
+            key={reg}
+            type="button"
+            variant={selectedRegion === reg ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setSelectedRegion(reg)}
+            className="h-6 px-1.5 text-[10px] font-medium"
+          >
+            {reg}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (!showHeader) {
+    return (
+      <div className={`relative w-full h-[380px] sm:h-[440px] bg-[#090a0c] flex items-center justify-center overflow-hidden ${className}`}>
+        {/* Authentic SVG Map of India with Precise Survey of India Contours */}
+        <svg
+          viewBox="0 0 800 650"
+          className="w-full h-full max-h-[480px] select-none"
+          style={{ filter: 'drop-shadow(0 0 10px rgba(0,0,0,0.5))' }}
+        >
+          <defs>
+            {/* Subtle Radar/Satellite Graticule Pattern */}
+            <pattern id="geospatial-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="0.75" />
+            </pattern>
+
+            {/* Indo-Gangetic Plain Thermal Inversion & Smog Plume Gradient */}
+            <radialGradient id="igp-smog-plume" cx="42%" cy="32%" r="48%">
+              <stop offset="0%" stopColor="#dc2626" stopOpacity="0.45" />
+              <stop offset="35%" stopColor="#ea580c" stopOpacity="0.30" />
+              <stop offset="65%" stopColor="#eab308" stopOpacity="0.18" />
+              <stop offset="100%" stopColor="#000000" stopOpacity="0.0" />
+            </radialGradient>
+
+            {/* Western Deccan Moderate Dispersion Gradient */}
+            <radialGradient id="west-dispersion-plume" cx="28%" cy="58%" r="35%">
+              <stop offset="0%" stopColor="#eab308" stopOpacity="0.3" />
+              <stop offset="60%" stopColor="#70ad47" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#000000" stopOpacity="0.0" />
+            </radialGradient>
+
+            {/* Southern Peninsula Clean Coastal Air Gradient */}
+            <radialGradient id="south-clean-plume" cx="38%" cy="78%" r="30%">
+              <stop offset="0%" stopColor="#00b050" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#000000" stopOpacity="0.0" />
+            </radialGradient>
+          </defs>
+
+          {/* Technical Coordinate Grid Background */}
+          <rect width="800" height="650" fill="url(#geospatial-grid)" />
+
+          {/* Latitude & Longitude Reference Graticules (Survey of India Standards) */}
+          <g stroke="rgba(255,255,255,0.06)" strokeWidth="0.75" strokeDasharray="3 3">
+            <line x1="60" y1="90" x2="740" y2="90" />
+            <text x="65" y="85" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="monospace">35°N</text>
+
+            <line x1="60" y1="216" x2="740" y2="216" />
+            <text x="65" y="211" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="monospace">28°N (NCR Lat)</text>
+
+            <line x1="60" y1="310" x2="740" y2="310" />
+            <text x="65" y="305" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="monospace">23.5°N (Tropic of Cancer)</text>
+
+            <line x1="60" y1="465" x2="740" y2="465" />
+            <text x="65" y="460" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="monospace">15°N (Deccan Lat)</text>
+
+            <line x1="60" y1="610" x2="740" y2="610" />
+            <text x="65" y="605" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="monospace">8°N</text>
+
+            <line x1="165" y1="35" x2="165" y2="620" />
+            <text x="170" y="45" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="monospace">72°E</text>
+
+            <line x1="290" y1="35" x2="290" y2="620" />
+            <text x="295" y="45" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="monospace">77°E (Delhi)</text>
+
+            <line x1="420" y1="35" x2="420" y2="620" />
+            <text x="425" y="45" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="monospace">82.5°E (IST Meridian)</text>
+
+            <line x1="560" y1="35" x2="560" y2="620" />
+            <text x="565" y="45" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="monospace">88°E (Kolkata)</text>
+          </g>
+
+          {/* Satellite Aerosol Optical Depth (AOD) Plume Layer */}
+          {mapLayer === 'aod' && (
+            <g className="transition-opacity duration-500">
+              <ellipse cx="360" cy="225" rx="240" ry="85" fill="url(#igp-smog-plume)" />
+              <circle cx="240" cy="380" r="110" fill="url(#west-dispersion-plume)" />
+              <circle cx="310" cy="510" r="100" fill="url(#south-clean-plume)" />
+            </g>
+          )}
+
+          {/* Survey of India Official Cartographic Contour */}
+          <path
+            d="M 285 45 L 320 65 L 335 95 L 350 120 L 390 145 L 435 155 L 460 170 L 490 175 L 530 185 L 565 190 L 610 205 L 640 230 L 665 240 L 685 270 L 690 300 L 660 310 L 630 300 L 615 285 L 590 280 L 575 290 L 580 320 L 560 340 L 540 375 L 510 405 L 480 435 L 440 470 L 390 520 L 360 560 L 330 600 L 315 625 L 300 600 L 280 560 L 260 520 L 245 480 L 235 440 L 230 400 L 210 380 L 180 350 L 150 325 L 130 300 L 140 270 L 165 250 L 195 240 L 220 220 L 245 190 L 260 150 L 275 110 L 285 75 Z"
+            fill="rgba(15, 23, 42, 0.75)"
+            stroke="#38bdf8"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+            className="transition-all duration-300"
+          />
+
+          {/* Indo-Gangetic Airshed Boundary */}
+          <path
+            d="M 220 200 Q 360 220 540 300"
+            fill="none"
+            stroke="#f59e0b"
+            strokeWidth="1.25"
+            strokeDasharray="4 4"
+            opacity="0.6"
+          />
+          <text x="320" y="240" fill="#f59e0b" fontSize="8" fontFamily="monospace" opacity="0.7">
+            INDO-GANGETIC AIRSHED (HIGH TRAPPING ZONE)
+          </text>
+
+          {/* Station Nodes */}
+          {filteredStations.map((stn) => {
+            const { x, y } = projectCoords(stn.lat, stn.lon);
+            const isSelected =
+              currentStation.toLowerCase().includes(stn.city.toLowerCase()) ||
+              currentCity.toLowerCase() === stn.city.toLowerCase();
+
+            const color = getCpcbColor(isSelected ? activeAqi : 120);
+
+            return (
+              <g
+                key={stn.city}
+                className="cursor-pointer transition-transform duration-200"
+                onClick={() => onSelectStation(stn.city)}
+                onMouseEnter={() => setHoveredStation(stn)}
+                onMouseLeave={() => setHoveredStation(null)}
+              >
+                {isSelected && (
+                  <circle cx={x} cy={y} r="14" fill={color.fill} fillOpacity="0.25" className="animate-ping" />
+                )}
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={isSelected ? '6' : '4.5'}
+                  fill={color.fill}
+                  stroke="#090a0c"
+                  strokeWidth={isSelected ? '2' : '1.5'}
+                />
+                <text
+                  x={x + 9}
+                  y={y + 3.5}
+                  fill={isSelected ? '#ffffff' : '#94a3b8'}
+                  fontSize={isSelected ? '10' : '8.5'}
+                  fontWeight={isSelected ? 'bold' : 'normal'}
+                  fontFamily="sans-serif"
+                  className="select-none pointer-events-none drop-shadow"
+                >
+                  {stn.name}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+
+        {/* Floating Controls (Bottom Right - Above Scrubber, Zero Collision) */}
+        <div className="absolute bottom-2.5 right-3 z-10 hidden sm:block">
+          {renderLayerControls}
+        </div>
+
+        {/* Floating Station Telemetry Detail Card on Hover (Bottom Left) */}
+        {hoveredStation && (
+          <div className="absolute bottom-12 left-3 pointer-events-none p-3 rounded-lg subtle-glass text-xs flex flex-col gap-1.5 animate-in fade-in duration-150 shadow-2xl z-20 max-w-[280px]">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-bold text-foreground">{hoveredStation.name}</span>
+              <Badge variant="outline" className="text-[9px] font-mono border-primary/40 text-primary">
+                {hoveredStation.region}
+              </Badge>
+            </div>
+            <p className="text-[10px] text-muted-foreground leading-snug">
+              {hoveredStation.description || hoveredStation.station}
+            </p>
+            <div className="flex items-center gap-2 text-[9px] font-mono text-muted-foreground mt-0.5">
+              <span>Lat: {hoveredStation.lat.toFixed(2)}°N</span>
+              <span>•</span>
+              <span>Lon: {hoveredStation.lon.toFixed(2)}°E</span>
+            </div>
+            <div className="pt-1 border-t border-border/50 flex items-center justify-between text-[10px]">
+              <span className="text-muted-foreground">Monitoring Hub:</span>
+              <span className="font-mono font-bold text-foreground">{hoveredStation.station}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Satellite AOD Legend (visible in AOD mode, bottom-left) */}
+        {mapLayer === 'aod' && (
+          <div className="absolute bottom-2.5 left-3 p-2 rounded-lg subtle-glass text-[9px] font-mono flex flex-col gap-1 z-10">
+            <div className="flex items-center gap-1 font-bold text-foreground">
+              <Satellite className="size-3 text-primary" />
+              <span>AOD (550nm)</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="size-2 rounded-full bg-[#00b050]" />
+              <span className="text-muted-foreground">&lt;0.2</span>
+              <span className="size-2 rounded-full bg-[#eab308] ml-1.5" />
+              <span className="text-muted-foreground">0.4-0.6</span>
+              <span className="size-2 rounded-full bg-[#991b1b] ml-1.5" />
+              <span className="text-foreground font-bold">&gt;0.8</span>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <Card className={`border-border bg-card text-card-foreground shadow-sm overflow-hidden flex flex-col ${className}`}>
@@ -75,50 +319,7 @@ export function GeospatialStationMap({
           </CardDescription>
         </div>
 
-        {/* Action Controls: Layer Switcher & Regional Filter */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Layer Switcher */}
-          <div className="flex items-center p-0.5 rounded-lg bg-muted/60 border border-border text-xs">
-            <Button
-              type="button"
-              variant={mapLayer === 'boundaries' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setMapLayer('boundaries')}
-              className="h-6 px-2 text-[10px] gap-1 font-medium"
-              title="Cartographic Political & Municipal Boundaries"
-            >
-              <MapIcon className="size-3" />
-              <span>Vector</span>
-            </Button>
-            <Button
-              type="button"
-              variant={mapLayer === 'aod' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setMapLayer('aod')}
-              className="h-6 px-2 text-[10px] gap-1 font-medium"
-              title="Satellite Aerosol Optical Depth (AOD) Thermal Smog Plume"
-            >
-              <Satellite className="size-3" />
-              <span>AOD Plume</span>
-            </Button>
-          </div>
-
-          {/* Regional Filter Chips */}
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
-            {['All', 'NCR', 'West', 'South', 'North & East'].map((reg) => (
-              <Button
-                key={reg}
-                type="button"
-                variant={selectedRegion === reg ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedRegion(reg)}
-                className="h-6 px-2 text-[10px] font-medium"
-              >
-                {reg}
-              </Button>
-            ))}
-          </div>
-        </div>
+        {renderLayerControls}
       </CardHeader>
 
       <CardContent className="p-0 relative flex-1 min-h-[360px] sm:min-h-[420px] bg-[#090a0c] flex items-center justify-center">

@@ -115,6 +115,7 @@ export function AtmosphericHeroViewport({
               stationName={currentStation}
               simulatedReductionPct={simulatedReductionPct}
               activeHour={activeHour}
+              showHeader={false}
               className="border-0 rounded-none h-full"
             />
           ) : (
@@ -123,6 +124,7 @@ export function AtmosphericHeroViewport({
               currentCity={currentCity}
               activeAqi={activeAqi}
               onSelectStation={onSelectStation}
+              showHeader={false}
               className="border-0 rounded-none h-full"
             />
           )}
