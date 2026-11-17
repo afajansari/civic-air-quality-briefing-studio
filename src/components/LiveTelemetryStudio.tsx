@@ -346,20 +346,20 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
   return (
     <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col gap-4 p-4 sm:p-5 text-card-foreground">
       {/* Studio Command Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/60">
         <div>
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400" aria-hidden="true">
               <Radio className="w-4 h-4 animate-pulse" />
             </div>
-            <h2 className="text-sm font-black tracking-tight text-white uppercase">
+            <h2 className="text-sm font-black tracking-tight text-foreground uppercase">
               Live Telemetry Studio
             </h2>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
               CPCB CAAQMS
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Real-time urban atmospheric criteria pollutant telemetry & 24-hr diurnal profiles
           </p>
         </div>
@@ -372,8 +372,8 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
             </span>
           )}
           {latestTelemetry?.station && (
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-950 text-slate-300 border border-slate-800 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-muted/40 text-muted-foreground border border-border flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
               <span className="truncate max-w-[140px] sm:max-w-[200px]">
                 {latestTelemetry.station}
               </span>
@@ -383,7 +383,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
             type="button"
             onClick={onAnalyze}
             disabled={isLoading}
-            className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 rounded-lg transition disabled:opacity-50"
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 rounded-lg transition disabled:opacity-50"
             title="Trigger AI civic intelligence synthesis"
           >
             {isLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
@@ -403,21 +403,21 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
         </span>
 
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" aria-hidden="true" />
+          <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-3 pointer-events-none" aria-hidden="true" />
           <input
             type="text"
             value={searchCity}
             onChange={(e) => setSearchCity(e.target.value)}
             disabled={liveLoading}
             placeholder="Search any Indian city, town or CAAQMS station (Press Enter)..."
-            className="w-full bg-slate-950 text-xs text-slate-100 pl-9 pr-10 py-2.5 rounded-xl border border-slate-800 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 placeholder:text-slate-400 disabled:bg-slate-800 disabled:text-slate-400 disabled:border-slate-700 transition"
+            className="w-full bg-background text-xs text-foreground pl-9 pr-10 py-2.5 rounded-xl border border-input focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted-foreground disabled:bg-muted disabled:text-muted-foreground disabled:border-border transition"
           />
           {liveLoading ? (
             <div className="absolute right-3 top-2.5">
               <Loader2 className="w-4 h-4 text-emerald-400 animate-spin" aria-hidden="true" />
             </div>
           ) : (
-            <kbd className="hidden sm:inline-block absolute right-3 top-2.5 px-1.5 py-0.5 text-[10px] font-mono text-slate-500 bg-slate-800 border border-slate-700 rounded">
+            <kbd className="hidden sm:inline-block absolute right-3 top-2.5 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground bg-muted border border-border rounded">
               ↵
             </kbd>
           )}
@@ -426,7 +426,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
         <button
           type="submit"
           disabled={liveLoading || !searchCity.trim()}
-          className="px-3 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-xs font-bold text-slate-950 transition focus:outline-none focus:ring-2 focus:ring-cyan-400 shrink-0"
+          className="px-3 py-2.5 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-xs font-bold text-primary-foreground transition focus:outline-none focus:ring-2 focus:ring-primary shrink-0"
         >
           {liveLoading ? 'Connecting...' : 'Query'}
         </button>
@@ -434,9 +434,9 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
 
       {/* Categorized Regional Chips */}
       <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+        <div className="flex items-center justify-between text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
           <span className="flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-cyan-400" />
+            <Layers className="w-3.5 h-3.5 text-primary" />
             Regional CAAQMS Grids
           </span>
           <div className="flex items-center gap-1">
@@ -447,8 +447,8 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
                 onClick={() => setActiveRegion(rg.region)}
                 className={`px-2 py-0.5 rounded text-[10px] font-bold transition ${
                   activeRegion === rg.region
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-primary/20 text-primary border border-primary/40'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {rg.region}
@@ -475,11 +475,11 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
                 disabled={liveLoading}
                 className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg border transition flex items-center gap-1.5 ${
                   isMatch
-                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-sm'
-                    : 'bg-slate-950/80 hover:bg-slate-800 text-slate-300 border-slate-800 hover:border-slate-700'
+                    ? 'bg-primary/15 text-primary border-primary/40 shadow-sm'
+                    : 'bg-card hover:bg-muted/60 text-muted-foreground hover:text-foreground border-border'
                 }`}
               >
-                <MapPin className={`w-3 h-3 ${isMatch ? 'text-emerald-400' : 'text-slate-500'}`} />
+                <MapPin className={`w-3 h-3 ${isMatch ? 'text-primary' : 'text-muted-foreground'}`} />
                 <span>{stn}</span>
               </button>
             );
@@ -489,35 +489,35 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
 
       {/* Prominent Criteria Pollutant Cards / Gauges */}
       <div className="flex flex-col gap-2 pt-1">
-        <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+        <div className="flex items-center justify-between text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
           <span className="flex items-center gap-1.5">
             <Activity className="w-3.5 h-3.5 text-emerald-400" />
             CPCB Criteria Pollutants (Ambient Ingestion)
           </span>
-          <span className="text-[10px] font-mono text-slate-500">
+          <span className="text-[10px] font-mono text-muted-foreground">
             {latestTelemetry?.current?.time ? `Updated ${latestTelemetry.current.time}` : 'Live Telemetry'}
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 min-w-0">
           {/* 1. PM2.5 */}
           {(() => {
             const status = getCpcbPollutantStatus('PM2.5', currentPM25);
             return (
-              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} flex flex-col gap-1.5`}>
+              <div className={`p-3 rounded-xl bg-muted/20 border ${status.borderClass} flex flex-col gap-1.5 min-w-0`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-white">PM2.5</span>
-                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass}`}>
+                  <span className="text-xs font-extrabold text-foreground truncate">PM2.5</span>
+                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass} shrink-0`}>
                     {status.label}
                   </span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className={`text-xl font-black ${status.color}`}>
+                  <span className={`text-xl font-black tabular-nums tracking-tight ${status.color}`}>
                     {currentPM25 != null ? currentPM25 : '—'}
                   </span>
-                  <span className="text-[10px] text-slate-500 font-mono">µg/m³</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">µg/m³</span>
                 </div>
-                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-muted/60 h-1.5 rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all duration-500 ${
                       status.label === 'Good'
@@ -541,20 +541,20 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
           {(() => {
             const status = getCpcbPollutantStatus('PM10', currentPM10);
             return (
-              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} flex flex-col gap-1.5`}>
+              <div className={`p-3 rounded-xl bg-muted/20 border ${status.borderClass} flex flex-col gap-1.5 min-w-0`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-white">PM10</span>
-                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass}`}>
+                  <span className="text-xs font-extrabold text-foreground truncate">PM10</span>
+                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass} shrink-0`}>
                     {status.label}
                   </span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className={`text-xl font-black ${status.color}`}>
+                  <span className={`text-xl font-black tabular-nums tracking-tight ${status.color}`}>
                     {currentPM10 != null ? currentPM10 : '—'}
                   </span>
-                  <span className="text-[10px] text-slate-500 font-mono">µg/m³</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">µg/m³</span>
                 </div>
-                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-muted/60 h-1.5 rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all duration-500 ${
                       status.label === 'Good'
@@ -578,20 +578,20 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
           {(() => {
             const status = getCpcbPollutantStatus('NO2', currentNO2);
             return (
-              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} flex flex-col gap-1.5`}>
+              <div className={`p-3 rounded-xl bg-muted/20 border ${status.borderClass} flex flex-col gap-1.5 min-w-0`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-white">NO2</span>
-                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass}`}>
+                  <span className="text-xs font-extrabold text-foreground truncate">NO2</span>
+                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass} shrink-0`}>
                     {status.label}
                   </span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className={`text-xl font-black ${status.color}`}>
+                  <span className={`text-xl font-black tabular-nums tracking-tight ${status.color}`}>
                     {currentNO2 != null ? currentNO2 : '—'}
                   </span>
-                  <span className="text-[10px] text-slate-500 font-mono">µg/m³</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">µg/m³</span>
                 </div>
-                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-muted/60 h-1.5 rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all duration-500 ${
                       status.label === 'Good'
@@ -613,20 +613,20 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
           {(() => {
             const status = getCpcbPollutantStatus('SO2', currentSO2);
             return (
-              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} flex flex-col gap-1.5`}>
+              <div className={`p-3 rounded-xl bg-muted/20 border ${status.borderClass} flex flex-col gap-1.5 min-w-0`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-white">SO2</span>
-                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass}`}>
+                  <span className="text-xs font-extrabold text-foreground truncate">SO2</span>
+                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass} shrink-0`}>
                     {status.label}
                   </span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className={`text-xl font-black ${status.color}`}>
+                  <span className={`text-xl font-black tabular-nums tracking-tight ${status.color}`}>
                     {currentSO2 != null ? currentSO2 : '—'}
                   </span>
-                  <span className="text-[10px] text-slate-500 font-mono">µg/m³</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">µg/m³</span>
                 </div>
-                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-muted/60 h-1.5 rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all duration-500 ${
                       status.label === 'Good'
@@ -646,20 +646,20 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
           {(() => {
             const status = getCpcbPollutantStatus('CO', currentCO);
             return (
-              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} flex flex-col gap-1.5`}>
+              <div className={`p-3 rounded-xl bg-muted/20 border ${status.borderClass} flex flex-col gap-1.5 min-w-0`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-white">CO</span>
-                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass}`}>
+                  <span className="text-xs font-extrabold text-foreground truncate">CO</span>
+                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass} shrink-0`}>
                     {status.label}
                   </span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className={`text-xl font-black ${status.color}`}>
+                  <span className={`text-xl font-black tabular-nums tracking-tight ${status.color}`}>
                     {currentCO != null ? currentCO : '—'}
                   </span>
-                  <span className="text-[10px] text-slate-500 font-mono">mg/m³</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">mg/m³</span>
                 </div>
-                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-muted/60 h-1.5 rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all duration-500 ${
                       status.label === 'Good'
@@ -679,20 +679,20 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
           {(() => {
             const status = getCpcbPollutantStatus('O3', currentO3);
             return (
-              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} flex flex-col gap-1.5`}>
+              <div className={`p-3 rounded-xl bg-muted/20 border ${status.borderClass} flex flex-col gap-1.5 min-w-0`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-white">O3</span>
-                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass}`}>
+                  <span className="text-xs font-extrabold text-foreground truncate">O3</span>
+                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass} shrink-0`}>
                     {status.label}
                   </span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className={`text-xl font-black ${status.color}`}>
+                  <span className={`text-xl font-black tabular-nums tracking-tight ${status.color}`}>
                     {currentO3 != null ? currentO3 : '—'}
                   </span>
-                  <span className="text-[10px] text-slate-500 font-mono">µg/m³</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">µg/m³</span>
                 </div>
-                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-muted/60 h-1.5 rounded-full overflow-hidden">
                   <div
                     className={`h-full transition-all duration-500 ${
                       status.label === 'Good'
@@ -731,31 +731,31 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
       </div>
 
       {/* Collapsible Raw Telemetry & Parser Inspector */}
-      <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/60">
+      <div className="border border-border rounded-xl overflow-hidden bg-muted/10">
         <button
           type="button"
           onClick={() => setIsInspectorOpen((prev) => !prev)}
-          className="w-full px-4 py-2.5 flex items-center justify-between text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-850/60 transition"
+          className="w-full px-4 py-2.5 flex items-center justify-between text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted/20 transition"
         >
           <span className="flex items-center gap-2">
-            <Database className="w-3.5 h-3.5 text-cyan-400" />
+            <Database className="w-3.5 h-3.5 text-primary" />
             Raw Telemetry & Parser Inspector
-            <span className="text-[10px] font-mono text-slate-500">
+            <span className="text-[10px] font-mono text-muted-foreground">
               ({rowCount} rows • Delimiter: &apos;{delimiter}&apos;)
             </span>
           </span>
           {isInspectorOpen ? (
-            <ChevronUp className="w-4 h-4 text-slate-400" />
+            <ChevronUp className="w-4 h-4 text-muted-foreground" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
           )}
         </button>
 
         {isInspectorOpen && (
-          <div className="p-4 border-t border-slate-800 flex flex-col gap-3 animate-in fade-in duration-200">
+          <div className="p-4 border-t border-border flex flex-col gap-3 animate-in fade-in duration-200">
             {/* Quick Presets & Upload Controls */}
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="text-[11px] font-semibold text-slate-400">
+              <div className="text-[11px] font-semibold text-muted-foreground">
                 Official CPCB / SPCB Benchmark Presets:
               </div>
               <div className="flex items-center gap-2">
@@ -769,9 +769,9 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-slate-300 bg-slate-850 hover:bg-slate-800 border border-slate-700 rounded-lg transition"
+                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-foreground bg-muted hover:bg-muted/80 border border-border rounded-lg transition"
                 >
-                  <Upload className="w-3 h-3 text-cyan-400" />
+                  <Upload className="w-3 h-3 text-primary" />
                   Upload IoT Log
                 </button>
               </div>
@@ -787,17 +787,17 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
                     setRawData(ds.csvData);
                     if (ds.cityKey) onCityChange(ds.cityKey);
                   }}
-                  className="p-2.5 text-left rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 transition flex flex-col gap-1"
+                  className="p-2.5 text-left rounded-lg bg-card hover:bg-muted/40 border border-border transition flex flex-col gap-1"
                 >
-                  <div className="text-xs font-bold text-white line-clamp-1">{ds.name}</div>
-                  <div className="text-[10px] text-slate-400 line-clamp-1">{ds.description}</div>
+                  <div className="text-xs font-bold text-foreground line-clamp-1">{ds.name}</div>
+                  <div className="text-[10px] text-muted-foreground line-clamp-1">{ds.description}</div>
                 </button>
               ))}
             </div>
 
             {/* Editable Raw Data Textarea */}
             <div className="flex flex-col gap-1">
-              <label htmlFor="raw-telemetry-editor" className="text-[11px] font-mono text-slate-400">
+              <label htmlFor="raw-telemetry-editor" className="text-[11px] font-mono text-muted-foreground">
                 Tabular Telemetry Feed (CSV / TSV / SPCB Stream):
               </label>
               <textarea
@@ -805,7 +805,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
                 rows={5}
                 value={rawData}
                 onChange={(e) => setRawData(e.target.value)}
-                className="w-full bg-slate-950 font-mono text-[11px] text-slate-200 p-2.5 rounded-lg border border-slate-800 focus:outline-none focus:border-cyan-500 scrollbar-thin"
+                className="w-full bg-background font-mono text-[11px] text-foreground p-2.5 rounded-lg border border-border focus:outline-none focus:border-primary scrollbar-thin"
                 placeholder="Station,Timestamp,PM2.5,PM10,NO2,SO2,CO,O3..."
               />
             </div>

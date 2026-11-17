@@ -117,51 +117,55 @@ export function PollutantBreakdownChart({ currentTelemetry }: PollutantBreakdown
   const exceededCount = chartData.filter((d) => d.isExceeded).length
 
   return (
-    <Card className="border-border bg-card text-card-foreground shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between pb-2 border-b border-border/50">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="size-4 text-primary" />
-            <CardTitle className="text-sm font-semibold tracking-wide">
+    <Card className="border-border bg-card text-card-foreground shadow-sm overflow-hidden">
+      <CardHeader className="flex flex-col gap-2 pb-2.5 border-b border-border/50">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <BarChart3 className="size-4 text-primary shrink-0" />
+            <CardTitle className="text-sm font-semibold tracking-wide truncate">
               CPCB NAAQS Criteria Standard Compliance
             </CardTitle>
           </div>
-          <CardDescription className="text-xs text-muted-foreground">
-            Current concentration relative to Indian statutory 24-hr safe exposure limits (100% = Threshold)
-          </CardDescription>
+
+          <div className="shrink-0">
+            {exceededCount > 0 ? (
+              <Badge variant="destructive" className="text-xs gap-1">
+                <AlertCircle className="size-3" />
+                {exceededCount} Exceeded
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="text-xs gap-1 border-primary/30 text-primary">
+                <ShieldCheck className="size-3" />
+                All Criteria Compliant
+              </Badge>
+            )}
+          </div>
         </div>
 
-        <div>
-          {exceededCount > 0 ? (
-            <Badge variant="destructive" className="text-xs gap-1">
-              <AlertCircle className="size-3" />
-              {exceededCount} Exceeded
-            </Badge>
-          ) : (
-            <Badge variant="secondary" className="text-xs gap-1 border-emerald-500/30 text-emerald-400">
-              <ShieldCheck className="size-3" />
-              All Criteria Compliant
-            </Badge>
-          )}
-        </div>
+        <CardDescription className="text-xs text-muted-foreground truncate">
+          Current concentration relative to Indian statutory 24-hr safe limits (100% = Standard)
+        </CardDescription>
       </CardHeader>
 
-      <CardContent className="pt-4 flex flex-col gap-3">
-        <ChartContainer config={breakdownConfig} className="h-56 w-full">
-          <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+      <CardContent className="pt-3 flex flex-col gap-3">
+        <ChartContainer config={breakdownConfig} className="h-52 w-full min-w-0">
+          <BarChart data={chartData} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
             <XAxis
               dataKey="pollutant"
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
+              tickMargin={6}
+              tick={{ fontSize: 10 }}
             />
             <YAxis
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
+              tickMargin={6}
               unit="%"
               domain={[0, "dataMax + 20"]}
+              width={35}
+              tick={{ fontSize: 10 }}
             />
             {/* 100% Statutory Baseline */}
             <ReferenceLine
@@ -169,7 +173,7 @@ export function PollutantBreakdownChart({ currentTelemetry }: PollutantBreakdown
               stroke="hsl(var(--destructive))"
               strokeDasharray="4 4"
               label={{
-                value: "100% NAAQS Safe Limit",
+                value: "100% Limit",
                 position: "insideTopLeft",
                 fill: "hsl(var(--destructive))",
                 fontSize: 9,
@@ -179,11 +183,11 @@ export function PollutantBreakdownChart({ currentTelemetry }: PollutantBreakdown
               content={
                 <ChartTooltipContent
                   indicator="dot"
-                  formatter={(value, name, item) => (
+                  formatter={(value, _name, item) => (
                     <div className="flex items-center justify-between w-full gap-3">
                       <span className="text-muted-foreground">{item.payload.name}:</span>
                       <span className="font-mono font-bold">
-                        {item.payload.value} {item.payload.unit} ({value}% of standard)
+                        {item.payload.value} {item.payload.unit} ({value}%)
                       </span>
                     </div>
                   )}
@@ -200,28 +204,6 @@ export function PollutantBreakdownChart({ currentTelemetry }: PollutantBreakdown
             </Bar>
           </BarChart>
         </ChartContainer>
-
-        {/* Breakdown pill badges */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 border-t border-border/40">
-          {chartData.map((d) => (
-            <div
-              key={d.pollutant}
-              className="flex items-center justify-between px-2.5 py-1.5 rounded-md border border-border/40 bg-muted/20 text-xs"
-            >
-              <span className="font-semibold">{d.pollutant}</span>
-              <span className="font-mono text-muted-foreground">
-                {d.value} {d.unit}
-              </span>
-              <span
-                className={`font-mono font-bold text-[10px] ${
-                  d.pct > 100 ? "text-destructive" : "text-primary"
-                }`}
-              >
-                {d.pct}%
-              </span>
-            </div>
-          ))}
-        </div>
       </CardContent>
     </Card>
   )

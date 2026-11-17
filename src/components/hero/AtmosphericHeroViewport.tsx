@@ -138,7 +138,7 @@ export function AtmosphericHeroViewport({
           </div>
 
           {/* Top-Right Floating Policy Scenario Sandbox */}
-          <div className="absolute top-3 right-3 z-20 max-w-[260px] sm:max-w-[360px] hidden md:block">
+          <div className="absolute top-3 right-3 z-20 w-auto max-w-[calc(100vw-2rem)] sm:max-w-[420px] hidden md:block">
             <PolicyScenarioSimulator
               baseAqi={activeAqi}
               basePm25={activePm25}

@@ -44,7 +44,7 @@ const chartConfig: ChartConfig = {
     color: "hsl(var(--chart-1))",
   },
   pm10: {
-    label: "PM10 (Coarse Particulate)",
+    label: "PM10 (Coarse Dust)",
     color: "hsl(var(--chart-2))",
   },
 }
@@ -118,93 +118,97 @@ export function AirQualityTrendChart({
   }, [points])
 
   return (
-    <Card className="border-border bg-card text-card-foreground shadow-sm">
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 gap-3 border-b border-border/50">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <Activity className="size-4 text-primary" />
-            <CardTitle className="text-sm font-semibold tracking-wide">
+    <Card className="border-border bg-card text-card-foreground shadow-sm overflow-hidden">
+      <CardHeader className="flex flex-col gap-2 pb-2.5 border-b border-border/50">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Activity className="size-4 text-primary shrink-0" />
+            <CardTitle className="text-sm font-semibold tracking-wide truncate">
               Diurnal Telemetry & CPCB Concentration Curves
             </CardTitle>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
             {latestAqi != null && (
               <Badge variant="outline" className="text-[10px] font-mono border-primary/40 text-primary">
                 Live AQI: {latestAqi}
               </Badge>
             )}
+
+            {/* Time Horizon Selector */}
+            <div className="flex items-center gap-1.5">
+              <Clock className="size-3 text-muted-foreground" />
+              <ToggleGroup
+                type="single"
+                value={timeRange}
+                onValueChange={(val) => {
+                  if (val) setTimeRange(val as "24" | "48" | "72")
+                }}
+                variant="outline"
+                size="sm"
+                className="bg-background/50 border border-border/60 rounded-md p-0.5 h-6"
+              >
+                <ToggleGroupItem value="24" className="px-2 py-0.5 text-[10px] h-5">
+                  24h
+                </ToggleGroupItem>
+                <ToggleGroupItem value="48" className="px-2 py-0.5 text-[10px] h-5">
+                  48h
+                </ToggleGroupItem>
+                <ToggleGroupItem value="72" className="px-2 py-0.5 text-[10px] h-5">
+                  72h
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
           </div>
-          <CardDescription className="text-xs text-muted-foreground">
-            {stationName} • Criteria particulate trend and regulatory threshold boundaries
-          </CardDescription>
         </div>
 
-        {/* Time Horizon Selector */}
-        <div className="flex items-center gap-2">
-          <Clock className="size-3.5 text-muted-foreground" />
-          <ToggleGroup
-            type="single"
-            value={timeRange}
-            onValueChange={(val) => {
-              if (val) setTimeRange(val as "24" | "48" | "72")
-            }}
-            variant="outline"
-            size="sm"
-            className="bg-background/50 border border-border/60 rounded-md p-0.5"
-          >
-            <ToggleGroupItem value="24" className="px-2.5 py-1 text-xs">
-              24h
-            </ToggleGroupItem>
-            <ToggleGroupItem value="48" className="px-2.5 py-1 text-xs">
-              48h
-            </ToggleGroupItem>
-            <ToggleGroupItem value="72" className="px-2.5 py-1 text-xs">
-              72h
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
+        <CardDescription className="text-xs text-muted-foreground truncate">
+          {stationName || city} • Criteria particulate trend and regulatory threshold boundaries
+        </CardDescription>
       </CardHeader>
 
-      <CardContent className="pt-4 flex flex-col gap-3">
-        {/* KPI Strip */}
-        <div className="grid grid-cols-3 gap-2 py-1">
-          <div className="rounded-md border border-border/40 bg-muted/20 p-2 flex flex-col gap-0.5">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+      <CardContent className="pt-3 flex flex-col gap-3">
+        {/* KPI Strip with stable proportions */}
+        <div className="grid grid-cols-3 gap-2 py-0.5">
+          <div className="rounded-md border border-border/40 bg-muted/20 p-2 flex flex-col gap-0.5 min-w-0">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold truncate">
               Peak PM2.5
             </span>
             <div className="flex items-baseline gap-1">
-              <span className="text-lg font-bold font-mono text-foreground">{stats.maxPM25}</span>
+              <span className="text-base sm:text-lg font-bold font-mono text-foreground tabular-nums">{stats.maxPM25}</span>
               <span className="text-[10px] text-muted-foreground">µg/m³</span>
             </div>
           </div>
 
-          <div className="rounded-md border border-border/40 bg-muted/20 p-2 flex flex-col gap-0.5">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-              Window Avg PM2.5
+          <div className="rounded-md border border-border/40 bg-muted/20 p-2 flex flex-col gap-0.5 min-w-0">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold truncate">
+              Avg PM2.5
             </span>
             <div className="flex items-baseline gap-1">
-              <span className="text-lg font-bold font-mono text-foreground">{stats.avgPM25}</span>
+              <span className="text-base sm:text-lg font-bold font-mono text-foreground tabular-nums">{stats.avgPM25}</span>
               <span className="text-[10px] text-muted-foreground">µg/m³</span>
             </div>
           </div>
 
-          <div className="rounded-md border border-border/40 bg-muted/20 p-2 flex flex-col gap-0.5">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+          <div className="rounded-md border border-border/40 bg-muted/20 p-2 flex flex-col gap-0.5 min-w-0">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold truncate">
               Peak PM10
             </span>
             <div className="flex items-baseline gap-1">
-              <span className="text-lg font-bold font-mono text-foreground">{stats.maxPM10}</span>
+              <span className="text-base sm:text-lg font-bold font-mono text-foreground tabular-nums">{stats.maxPM10}</span>
               <span className="text-[10px] text-muted-foreground">µg/m³</span>
             </div>
           </div>
         </div>
 
-        {/* Chart View */}
+        {/* Chart View with proper margins and non-overlapping thresholds */}
         {points.length === 0 ? (
-          <div className="h-64 flex items-center justify-center text-xs text-muted-foreground border border-dashed border-border rounded-md">
+          <div className="h-60 flex items-center justify-center text-xs text-muted-foreground border border-dashed border-border rounded-md">
             No hourly telemetry series available for {city}
           </div>
         ) : (
-          <ChartContainer config={chartConfig} className="h-64 w-full">
-            <AreaChart data={points} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <ChartContainer config={chartConfig} className="h-60 w-full min-w-0">
+            <AreaChart data={points} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="fillPm25" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.4} />
@@ -220,24 +224,27 @@ export function AirQualityTrendChart({
                 dataKey="time"
                 tickLine={false}
                 axisLine={false}
-                tickMargin={8}
+                tickMargin={6}
                 interval="preserveStartEnd"
+                tick={{ fontSize: 10 }}
               />
               <YAxis
                 tickLine={false}
                 axisLine={false}
-                tickMargin={8}
+                tickMargin={6}
                 domain={[0, "auto"]}
+                width={35}
+                tick={{ fontSize: 10 }}
               />
 
-              {/* CPCB Regulatory Threshold Reference Lines */}
+              {/* CPCB Regulatory Threshold Reference Lines with non-colliding labels */}
               <ReferenceLine
                 y={60}
                 stroke="hsl(var(--chart-2))"
                 strokeDasharray="4 4"
                 label={{
-                  value: "CPCB 24h Standard (60 µg/m³)",
-                  position: "insideTopRight",
+                  value: "CPCB Std (60)",
+                  position: "insideBottomRight",
                   fill: "hsl(var(--muted-foreground))",
                   fontSize: 9,
                 }}
@@ -247,7 +254,7 @@ export function AirQualityTrendChart({
                 stroke="hsl(var(--chart-3))"
                 strokeDasharray="3 3"
                 label={{
-                  value: "GRAP I Threshold (120 µg/m³)",
+                  value: "GRAP I (120)",
                   position: "insideTopRight",
                   fill: "hsl(var(--destructive))",
                   fontSize: 9,
@@ -289,12 +296,13 @@ export function AirQualityTrendChart({
           </ChartContainer>
         )}
 
-        <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/40">
-          <div className="flex items-center gap-1.5">
-            <TrendingUp className="size-3 text-primary" />
-            <span>Diurnal peak occurs during nocturnal temperature inversion (22:00 - 06:00 IST)</span>
+        {/* Footer with clean flex-col/sm:flex-row wrapping */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-muted-foreground pt-1.5 border-t border-border/40 gap-1">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <TrendingUp className="size-3 text-primary shrink-0" />
+            <span className="truncate">Diurnal peak during nocturnal inversion (22:00 - 06:00 IST)</span>
           </div>
-          <span className="font-mono text-[10px]">Source: CPCB & Open-Meteo Grid</span>
+          <span className="font-mono text-[10px] shrink-0 text-muted-foreground/80">Source: CPCB CAAQMS Grid</span>
         </div>
       </CardContent>
     </Card>

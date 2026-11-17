@@ -208,25 +208,25 @@ export const StreamingBriefTerminal: React.FC<StreamingBriefTerminalProps> = ({
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden flex flex-col space-y-4 p-4 sm:p-5">
+    <div className="bg-card border border-border rounded-xl shadow-lg overflow-hidden flex flex-col space-y-4 p-4 sm:p-5 text-card-foreground">
       {/* Top Header & Terminal Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/60">
         <div>
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-400" aria-hidden="true">
+            <div className="p-1.5 rounded-lg bg-primary/20 text-primary" aria-hidden="true">
               <Sparkles className="w-4 h-4" />
             </div>
-            <h2 className="text-sm font-black tracking-tight text-white uppercase">
+            <h2 className="text-sm font-black tracking-tight text-foreground uppercase">
               Streaming Civic Intelligence Terminal
             </h2>
             {isStreaming && (
-              <span className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 animate-pulse font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+              <span className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/40 animate-pulse font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                 STREAMING LIVE
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             CPCB GRAP statutory directives, persona-grounded interventions & conversational AI
           </p>
         </div>
