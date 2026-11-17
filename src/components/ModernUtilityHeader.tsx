@@ -1,8 +1,9 @@
-import React from "react"
-import { Wind, Search, RefreshCw, History, Key, MapPin } from "lucide-react"
+import React, { useState, useEffect } from "react"
+import { Wind, Search, RefreshCw, History, Key, MapPin, Volume2, VolumeX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
+import { getAudioMuted, setAudioMuted, playStatusChime } from "@/lib/audio-alerts"
 
 interface ModernUtilityHeaderProps {
   currentStation: string
@@ -29,6 +30,21 @@ export const ModernUtilityHeader: React.FC<ModernUtilityHeaderProps> = ({
   hasCustomKey,
   className = "",
 }) => {
+  const [isMuted, setIsMuted] = useState(true);
+
+  useEffect(() => {
+    setIsMuted(getAudioMuted());
+  }, []);
+
+  const handleToggleAudio = () => {
+    const next = !isMuted;
+    setAudioMuted(next);
+    setIsMuted(next);
+    if (!next) {
+      playStatusChime(640, 0.2);
+    }
+  };
+
   return (
     <header
       role="banner"
@@ -163,6 +179,24 @@ export const ModernUtilityHeader: React.FC<ModernUtilityHeaderProps> = ({
                 title="Custom API key configured"
               />
             )}
+          </Button>
+
+          {/* Audio Alerts Toggle */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleToggleAudio}
+            aria-label={isMuted ? "Enable atmospheric audio alerts" : "Mute atmospheric audio alerts"}
+            title={isMuted ? "Audio alerts muted (Click to enable)" : "Audio alerts active (Click to mute)"}
+            className="flex items-center gap-1.5 h-8 px-2.5 text-xs font-medium border-border bg-background hover:bg-accent text-foreground"
+          >
+            {isMuted ? (
+              <VolumeX className="size-3.5 text-muted-foreground" aria-hidden="true" />
+            ) : (
+              <Volume2 className="size-3.5 text-primary animate-pulse" aria-hidden="true" />
+            )}
+            <span className="hidden md:inline">{isMuted ? "Muted" : "Audio On"}</span>
           </Button>
 
           {/* Visual Theme Switcher */}
