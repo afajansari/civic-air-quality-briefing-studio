@@ -3,13 +3,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { Header } from '@/components/Header';
-import { DataIngestion } from '@/components/DataIngestion';
+import { DataIngestion, LiveTelemetryData } from '@/components/DataIngestion';
 import { PersonaConfigBar } from '@/components/PersonaConfigBar';
 import { KpiMetrics } from '@/components/KpiMetrics';
 import { DataIntegrityPanel } from '@/components/DataIntegrityPanel';
 import { BriefingNoteTab } from '@/components/BriefingNoteTab';
 import { CitizenAdvisoryTab } from '@/components/CitizenAdvisoryTab';
-import { AUTHENTIC_DATASETS, DatasetPreset } from '@/lib/authentic-datasets';
 import {
   AqiStandard,
   BriefComparison,
@@ -66,7 +65,8 @@ import {
   History,
   X,
   AlertTriangle,
-  Loader2
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 
 interface SavedBriefMeta {
@@ -82,7 +82,10 @@ interface SavedBriefMeta {
 }
 
 export default function Home() {
-  const [rawData, setRawData] = useState<string>(AUTHENTIC_DATASETS[0].csvData);
+  const [rawData, setRawData] = useState<string>('');
+  const [currentCity, setCurrentCity] = useState<string>('Delhi');
+  const [latestTelemetry, setLatestTelemetry] = useState<LiveTelemetryData | null>(null);
+  const [isRefreshingLive, setIsRefreshingLive] = useState<boolean>(false);
   const [persona, setPersona] = useState<PersonaType>('ward_officer');
   const [standard, setStandard] = useState<AqiStandard>('cpcb');
   const [language, setLanguage] = useState<LanguageCode>('en');
@@ -102,13 +105,6 @@ export default function Home() {
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useState<boolean>(false);
 
-  useEffect(() => {
-    const storedKey = localStorage.getItem('civic_gemini_api_key');
-    if (storedKey) setApiKey(storedKey);
-
-    fetchSavedBriefs();
-  }, []);
-
   const fetchSavedBriefs = async () => {
     try {
       const res = await fetch('/api/briefs');
@@ -121,13 +117,43 @@ export default function Home() {
     }
   };
 
-  const handleDatasetSelect = (ds: DatasetPreset) => {
-    setRawData(ds.csvData);
-    setStandard(ds.defaultStandard);
-    if (ds.suggestedPersona) {
-      setPersona(ds.suggestedPersona as PersonaType);
+  const fetchLiveTelemetry = useCallback(async (cityName: string = 'Delhi') => {
+    setIsRefreshingLive(true);
+    try {
+      const res = await fetch(`/api/live-aqi?city=${encodeURIComponent(cityName)}`);
+      const data = await res.json();
+      if (data.success && data.csvData) {
+        setRawData(data.csvData);
+        setCurrentCity(cityName);
+        const telemetryRecord: LiveTelemetryData = {
+          city: data.city || cityName,
+          station: data.station || cityName,
+          coordinates: data.coordinates,
+          current: data.current || {},
+          csvData: data.csvData
+        };
+        setLatestTelemetry(telemetryRecord);
+        return telemetryRecord;
+      } else {
+        setErrorMsg(data.error || `Could not fetch live telemetry for ${cityName}`);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error fetching live air quality data';
+      setErrorMsg(msg);
+    } finally {
+      setIsRefreshingLive(false);
     }
-  };
+    return null;
+  }, []);
+
+  useEffect(() => {
+    const storedKey = localStorage.getItem('civic_gemini_api_key');
+    if (storedKey) setApiKey(storedKey);
+
+    fetchSavedBriefs();
+    // Auto-fetch Delhi live data on component mount
+    fetchLiveTelemetry('Delhi');
+  }, [fetchLiveTelemetry]);
 
   const handleAnalyze = useCallback(async () => {
     if (!rawData.trim()) return;
@@ -165,11 +191,18 @@ export default function Home() {
     }
   }, [rawData, persona, standard, language, readingLevel, apiKey, selectedModel]);
 
-  useEffect(() => {
-    if (rawData && !currentBrief) {
+  const handleRefreshLive = useCallback(async () => {
+    const result = await fetchLiveTelemetry(currentCity);
+    if (result?.csvData) {
       handleAnalyze();
     }
-  }, [handleAnalyze, rawData, currentBrief]);
+  }, [fetchLiveTelemetry, currentCity, handleAnalyze]);
+
+  useEffect(() => {
+    if (rawData && !currentBrief && !isLoading) {
+      handleAnalyze();
+    }
+  }, [handleAnalyze, rawData, currentBrief, isLoading]);
 
   const handleRowHighlight = (rowIndex: number) => {
     setHighlightRowIndex(rowIndex);
@@ -224,6 +257,9 @@ ${note.complianceDirectives.map(d => `- ${d}`).join('\n')}
         hasCustomKey={!!apiKey}
         onOpenHistoryModal={() => setIsHistoryDrawerOpen(true)}
         savedBriefCount={savedBriefs.length}
+        onRefreshLive={handleRefreshLive}
+        isRefreshingLive={isRefreshingLive}
+        currentCity={currentCity}
       />
 
       <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -245,11 +281,32 @@ ${note.complianceDirectives.map(d => `- ${d}`).join('\n')}
             setRawData={setRawData}
             onAnalyze={handleAnalyze}
             isLoading={isLoading}
-            onSelectDataset={handleDatasetSelect}
+            currentCity={currentCity}
+            onCityChange={setCurrentCity}
+            latestTelemetry={latestTelemetry}
+            onTelemetryLoaded={setLatestTelemetry}
           />
         </section>
 
-        <section className="no-print">
+        <section className="no-print space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900/60 border border-slate-800 px-4 py-2.5 rounded-xl">
+            <div className="flex items-center gap-2 text-xs text-slate-300">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true" />
+              <span>
+                Active Telemetry Station: <strong className="text-white font-semibold">{currentCity} CAAQMS</strong>
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleRefreshLive}
+              disabled={isRefreshingLive || isLoading}
+              aria-label={`Refresh live data for ${currentCity}`}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-300 hover:text-white bg-slate-800 hover:bg-slate-700 disabled:opacity-50 rounded-lg border border-slate-700 transition focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${isRefreshingLive ? 'animate-spin' : ''}`} aria-hidden="true" />
+              <span>{isRefreshingLive ? 'Refreshing Telemetry...' : 'Refresh Live Data'}</span>
+            </button>
+          </div>
           <PersonaConfigBar
             persona={persona}
             setPersona={setPersona}

@@ -1,20 +1,26 @@
 'use client';
 
 import React from 'react';
-import { Wind, Key, FileText } from 'lucide-react';
+import { Wind, Key, FileText, RefreshCw } from 'lucide-react';
 
 interface HeaderProps {
   onOpenApiKeyModal: () => void;
   hasCustomKey: boolean;
   onOpenHistoryModal: () => void;
   savedBriefCount: number;
+  onRefreshLive?: () => void;
+  isRefreshingLive?: boolean;
+  currentCity?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenApiKeyModal,
   hasCustomKey,
   onOpenHistoryModal,
-  savedBriefCount
+  savedBriefCount,
+  onRefreshLive,
+  isRefreshingLive,
+  currentCity
 }) => {
   return (
     <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40" role="banner">
@@ -41,6 +47,20 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Action Controls */}
         <nav aria-label="Quick Actions" className="flex items-center gap-2 sm:gap-3">
+          {onRefreshLive && (
+            <button
+              type="button"
+              onClick={onRefreshLive}
+              disabled={isRefreshingLive}
+              aria-label={`Refresh live air quality data for ${currentCity || 'current city'}`}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-300 bg-emerald-950/60 hover:bg-emerald-900/60 disabled:opacity-50 rounded-lg border border-emerald-800/80 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${isRefreshingLive ? 'animate-spin' : ''}`} aria-hidden="true" />
+              <span className="hidden sm:inline">Refresh Live Data</span>
+              {currentCity && <span className="hidden md:inline text-[10px] text-emerald-400/80">({currentCity})</span>}
+            </button>
+          )}
+
           <button
             onClick={onOpenHistoryModal}
             aria-label={`View Briefs History (${savedBriefCount} saved briefs)`}
