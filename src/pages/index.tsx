@@ -355,9 +355,64 @@ ${note.complianceDirectives.map((d) => `- ${d}`).join('\n')}
       <Head>
         <title>
           {currentBrief
-            ? `[AQI ${currentBrief.summary.averageAQI}] ${currentCity} Civic Air Quality Briefing Studio`
+            ? `AQI ${currentBrief.summary.averageAQI} | ${currentCity} Civic AQ Studio`
             : `Civic Air Quality Briefing Studio | ${currentCity} Telemetry`}
         </title>
+        <meta
+          name="description"
+          content="Live Indian CAAQMS air quality monitoring, CPCB sub-index calculation, 3D atmospheric smog chamber simulation, and AI civic intelligence briefing studio."
+        />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+        <link rel="canonical" href="http://localhost:3000/" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="/favicon.ico" />
+
+        {/* OpenGraph Metadata */}
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Civic Air Quality Briefing Studio" />
+        <meta
+          property="og:title"
+          content={`Civic Air Quality Briefing Studio | ${currentCity} Telemetry`}
+        />
+        <meta
+          property="og:description"
+          content="Continuous Ambient Air Quality Monitoring Network (CAAQMS) telemetry with 3D atmospheric physics, satellite AOD modeling, and civic action synthesis."
+        />
+        <meta property="og:url" content="http://localhost:3000/" />
+        <meta property="og:image" content="http://localhost:3000/favicon.ico" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content={`Civic Air Quality Briefing Studio | ${currentCity} Telemetry`}
+        />
+        <meta
+          name="twitter:description"
+          content="Continuous Ambient Air Quality Monitoring Network (CAAQMS) telemetry with 3D atmospheric physics and civic action synthesis."
+        />
+        <meta name="twitter:image" content="http://localhost:3000/favicon.ico" />
+
+        {/* JSON-LD Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebApplication',
+              name: 'Civic Air Quality Briefing Studio',
+              applicationCategory: 'EnvironmentalMonitoringApplication',
+              operatingSystem: 'Any',
+              description:
+                'Continuous Ambient Air Quality Monitoring Network (CAAQMS) telemetry, 3D atmospheric physics, and civic action briefing generator.',
+              offers: {
+                '@type': 'Offer',
+                price: '0',
+                priceCurrency: 'INR',
+              },
+            }),
+          }}
+        />
       </Head>
 
       <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 pb-16 selection:bg-cyan-500/30 selection:text-white">
