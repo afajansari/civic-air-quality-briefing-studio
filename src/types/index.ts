@@ -2,6 +2,8 @@
  * Civic Air Quality Briefing Studio - TypeScript Type Definitions
  */
 
+import type { GrapStageDetails } from '../lib/grap-rules';
+
 export type PersonaType = 'ward_officer' | 'housing_society' | 'school' | 'healthcare';
 export type AqiStandard = 'cpcb' | 'epa';
 export type LanguageCode = 'en' | 'hi' | 'es' | 'mr' | 'ta' | 'bn';
@@ -188,6 +190,7 @@ export interface CivicBrief {
   generatedAt: string;
   persona: PersonaType;
   personaTitle: string;
+  grapStage?: GrapStageDetails;
   language: LanguageCode;
   readingLevel: ReadingLevel;
   aiModelUsed: string;

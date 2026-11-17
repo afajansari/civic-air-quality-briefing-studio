@@ -441,8 +441,10 @@ test('Security Headers: next.config.mjs omits deprecated browsing-topics and con
 });
 
 test('Live Telemetry Route Contract: 15-min ISR caching & edge Cache-Control headers', () => {
-  const routePath = path.resolve(__dirname, '..', 'src', 'app', 'api', 'live-aqi', 'route.ts');
-  assert.ok(fs.existsSync(routePath), 'src/app/api/live-aqi/route.ts must exist');
+  const pagesRoute = path.resolve(__dirname, '..', 'src', 'pages', 'api', 'live-aqi.ts');
+  const appRoute = path.resolve(__dirname, '..', 'src', 'app', 'api', 'live-aqi', 'route.ts');
+  const routePath = fs.existsSync(pagesRoute) ? pagesRoute : appRoute;
+  assert.ok(fs.existsSync(routePath), 'Live AQI route handler must exist');
   const routeContent = fs.readFileSync(routePath, 'utf8');
 
   // Verify 15-minute ISR revalidation for air quality fetch
@@ -459,7 +461,8 @@ test('Live Telemetry Route Contract: 15-min ISR caching & edge Cache-Control hea
 
   // Verify edge Cache-Control header
   assert.ok(
-    routeContent.includes("'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=1800'"),
+    routeContent.includes("'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=1800'") ||
+    routeContent.includes("res.setHeader('Cache-Control', 'public, s-maxage=900, stale-while-revalidate=1800')"),
     'Route must return Cache-Control: public, s-maxage=900, stale-while-revalidate=1800'
   );
 });
@@ -513,9 +516,11 @@ test('Frontend Form Accessibility & UI Polish Contract: DataIngestion.tsx', () =
   );
 });
 
-test('Client Hydration Guard & Stabilization Contract: page.tsx', () => {
-  const pagePath = path.resolve(__dirname, '..', 'src', 'app', 'page.tsx');
-  assert.ok(fs.existsSync(pagePath), 'page.tsx must exist');
+test('Client Hydration Guard & Stabilization Contract: page.tsx / index.tsx', () => {
+  const pagesPath = path.resolve(__dirname, '..', 'src', 'pages', 'index.tsx');
+  const appPath = path.resolve(__dirname, '..', 'src', 'app', 'page.tsx');
+  const pagePath = fs.existsSync(pagesPath) ? pagesPath : appPath;
+  assert.ok(fs.existsSync(pagePath), 'index.tsx or page.tsx must exist');
   const content = fs.readFileSync(pagePath, 'utf8');
 
   // 1. isMounted hydration guard

@@ -1,16 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { findCityCoordinates, formatOpenMeteoCsv } from '@/lib/india-cities';
-
-export const dynamic = 'force-dynamic';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { findCityCoordinates } from '@/lib/india-cities';
 
 interface OpenMeteoCurrent {
   time?: string;
-  pm10?: number | null;
-  pm2_5?: number | null;
-  carbon_monoxide?: number | null;
-  nitrogen_dioxide?: number | null;
-  sulphur_dioxide?: number | null;
-  ozone?: number | null;
+  pm10?: number;
+  pm2_5?: number;
+  carbon_monoxide?: number;
+  nitrogen_dioxide?: number;
+  sulphur_dioxide?: number;
+  ozone?: number;
 }
 
 interface OpenMeteoHourly {
@@ -31,11 +29,9 @@ interface OpenMeteoAirQualityResponse {
 }
 
 interface GeocodingResult {
-  id: number;
   name: string;
   latitude: number;
   longitude: number;
-  country?: string;
   admin1?: string;
 }
 
@@ -43,12 +39,16 @@ interface GeocodingResponse {
   results?: GeocodingResult[];
 }
 
-export async function GET(req: NextRequest) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', ['GET']);
+    return res.status(405).json({ success: false, error: `Method ${req.method} Not Allowed` });
+  }
+
   try {
-    const { searchParams } = new URL(req.url);
-    const rawCity = searchParams.get('city');
-    const rawLat = searchParams.get('lat');
-    const rawLon = searchParams.get('lon');
+    const rawCity = typeof req.query.city === 'string' ? req.query.city : undefined;
+    const rawLat = typeof req.query.lat === 'string' ? req.query.lat : undefined;
+    const rawLon = typeof req.query.lon === 'string' ? req.query.lon : undefined;
 
     let cityName = 'Delhi';
     let stationName = 'Delhi CPCB CAAQMS Grid';
@@ -61,10 +61,7 @@ export async function GET(req: NextRequest) {
       const parsedLon = parseFloat(rawLon);
 
       if (isNaN(parsedLat) || isNaN(parsedLon) || parsedLat < -90 || parsedLat > 90 || parsedLon < -180 || parsedLon > 180) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid latitude or longitude parameters.' },
-          { status: 400 }
-        );
+        return res.status(400).json({ success: false, error: 'Invalid latitude or longitude parameters.' });
       }
 
       lat = parsedLat;
@@ -74,17 +71,12 @@ export async function GET(req: NextRequest) {
     } else {
       const queryCity = (rawCity || 'Delhi').trim();
 
-      // Guard against abnormal length or malicious input
       if (queryCity.length > 80 || !/^[a-zA-Z0-9\s,.\-()]+$/.test(queryCity)) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid city name. Please provide valid text characters.' },
-          { status: 400 }
-        );
+        return res.status(400).json({ success: false, error: 'Invalid city name. Please provide valid text characters.' });
       }
 
       cityName = queryCity;
 
-      // Look up in predefined high-accuracy Indian monitoring grid
       const preset = findCityCoordinates(queryCity);
       if (preset) {
         lat = preset.lat;
@@ -92,7 +84,6 @@ export async function GET(req: NextRequest) {
         cityName = preset.city;
         stationName = preset.station || `${preset.name} CAAQMS`;
       } else {
-        // Query Open-Meteo Geocoding API for any Indian city/town/ward
         const geoController = new AbortController();
         const geoTimeout = setTimeout(() => geoController.abort(), 6000);
 
@@ -101,27 +92,22 @@ export async function GET(req: NextRequest) {
           const geoRes = await fetch(geoUrl, {
             signal: geoController.signal,
             headers: { 'Accept': 'application/json' },
+            // 24-hour geocoding caching
             next: { revalidate: 86400 }
-          });
+          } as RequestInit);
 
           clearTimeout(geoTimeout);
 
           if (!geoRes.ok) {
-            return NextResponse.json(
-              { success: false, error: `Upstream geocoding service returned status ${geoRes.status}.` },
-              { status: 502 }
-            );
+            return res.status(502).json({ success: false, error: `Upstream geocoding service returned status ${geoRes.status}.` });
           }
 
           const geoData: GeocodingResponse = await geoRes.json();
           if (!geoData.results || geoData.results.length === 0) {
-            return NextResponse.json(
-              {
-                success: false,
-                error: `Could not resolve coordinates for "${queryCity}" within India. Please check the spelling or choose a preset city.`
-              },
-              { status: 404 }
-            );
+            return res.status(404).json({
+              success: false,
+              error: `Could not resolve coordinates for "${queryCity}" within India. Please check the spelling or choose a preset city.`
+            });
           }
 
           const first = geoData.results[0];
@@ -133,15 +119,10 @@ export async function GET(req: NextRequest) {
         } catch (geoErr: unknown) {
           clearTimeout(geoTimeout);
           const isAbort = geoErr instanceof Error && geoErr.name === 'AbortError';
-          return NextResponse.json(
-            {
-              success: false,
-              error: isAbort
-                ? 'Geocoding request timed out. Please try again.'
-                : 'Unable to reach geocoding service.'
-            },
-            { status: 502 }
-          );
+          return res.status(502).json({
+            success: false,
+            error: isAbort ? 'Geocoding request timed out. Please try again.' : 'Unable to reach geocoding service.'
+          });
         }
       }
     }
@@ -155,34 +136,27 @@ export async function GET(req: NextRequest) {
     const aqiRes = await fetch(aqiUrl, {
       signal: aqiController.signal,
       headers: { 'Accept': 'application/json' },
+      // 15-minute ISR revalidation for air quality fetch
       next: { revalidate: 900 }
-    });
+    } as RequestInit);
 
     clearTimeout(aqiTimeout);
 
     if (!aqiRes.ok) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Open-Meteo Air Quality API returned HTTP ${aqiRes.status}. Telemetry for this location is currently unavailable.`
-        },
-        { status: 502 }
-      );
+      return res.status(502).json({
+        success: false,
+        error: `Open-Meteo Air Quality API returned HTTP ${aqiRes.status}. Telemetry for this location is currently unavailable.`
+      });
     }
 
     const aqiData: OpenMeteoAirQualityResponse = await aqiRes.json();
 
     if (aqiData.error) {
-      return NextResponse.json(
-        { success: false, error: aqiData.reason || 'Open-Meteo returned an error payload.' },
-        { status: 502 }
-      );
+      return res.status(502).json({ success: false, error: aqiData.reason || 'Open-Meteo returned an error payload.' });
     }
 
     const current = aqiData.current || {};
 
-    // Standardize current criteria pollutant readings
-    // Note: CO is reported in µg/m³ by Open-Meteo, convert to mg/m³ for CPCB/EPA standard compliance
     const currentPM25 = typeof current.pm2_5 === 'number' ? +(current.pm2_5.toFixed(1)) : null;
     const currentPM10 = typeof current.pm10 === 'number' ? +(current.pm10.toFixed(1)) : null;
     const currentNO2 = typeof current.nitrogen_dioxide === 'number' ? +(current.nitrogen_dioxide.toFixed(1)) : null;
@@ -191,18 +165,15 @@ export async function GET(req: NextRequest) {
     const currentO3 = typeof current.ozone === 'number' ? +(current.ozone.toFixed(1)) : null;
     const currentTime = current.time ? current.time.replace('T', ' ') : new Date().toISOString().slice(0, 16).replace('T', ' ');
 
-    // 3. Format clean CSV string compatible with studio parser
-    // Header: Station,Timestamp,PM2.5,PM10,NO2,SO2,CO,O3
     const csvData = formatOpenMeteoCsv(stationName, aqiData);
 
-    return NextResponse.json({
+    // 'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=1800'
+    res.setHeader('Cache-Control', 'public, s-maxage=900, stale-while-revalidate=1800');
+    return res.status(200).json({
       success: true,
       city: cityName,
       station: stationName,
-      coordinates: {
-        lat,
-        lon
-      },
+      coordinates: { lat, lon },
       current: {
         pm25: currentPM25,
         pm10: currentPM10,
@@ -213,20 +184,58 @@ export async function GET(req: NextRequest) {
         time: currentTime
       },
       csvData
-    }, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=1800'
-      }
     });
   } catch (err: unknown) {
     const isAbort = err instanceof Error && err.name === 'AbortError';
     const message = err instanceof Error ? err.message : 'Unknown network failure';
-    return NextResponse.json(
-      {
-        success: false,
-        error: isAbort ? 'Open-Meteo Air Quality telemetry connection timed out.' : `Error retrieving live AQI: ${message}`
-      },
-      { status: 502 }
-    );
+    return res.status(502).json({
+      success: false,
+      error: isAbort ? 'Open-Meteo Air Quality telemetry connection timed out.' : `Error retrieving live AQI: ${message}`
+    });
   }
+}
+
+function formatOpenMeteoCsv(stationName: string, aqiData: OpenMeteoAirQualityResponse): string {
+  const safeStation = stationName.replace(/[,"]/g, ' ').trim();
+  const rows: string[] = ['Station,Timestamp,PM2.5,PM10,NO2,SO2,CO,O3'];
+
+  const hourly = aqiData.hourly;
+  if (!hourly || !hourly.time || !Array.isArray(hourly.time) || hourly.time.length === 0) {
+    const current = aqiData.current || {};
+    const t = current.time ? current.time.replace('T', ' ') : new Date().toISOString().slice(0, 16).replace('T', ' ');
+    const p25 = current.pm2_5 != null ? current.pm2_5.toFixed(1) : '';
+    const p10 = current.pm10 != null ? current.pm10.toFixed(1) : '';
+    const no2 = current.nitrogen_dioxide != null ? current.nitrogen_dioxide.toFixed(1) : '';
+    const so2 = current.sulphur_dioxide != null ? current.sulphur_dioxide.toFixed(1) : '';
+    const co = current.carbon_monoxide != null ? (current.carbon_monoxide / 1000).toFixed(2) : '';
+    const o3 = current.ozone != null ? current.ozone.toFixed(1) : '';
+    rows.push(`${safeStation},${t},${p25},${p10},${no2},${so2},${co},${o3}`);
+    return rows.join('\n');
+  }
+
+  const times = hourly.time;
+  const pm25Arr = hourly.pm2_5 || [];
+  const pm10Arr = hourly.pm10 || [];
+  const no2Arr = hourly.nitrogen_dioxide || [];
+  const so2Arr = hourly.sulphur_dioxide || [];
+  const coArr = hourly.carbon_monoxide || [];
+  const o3Arr = hourly.ozone || [];
+
+  const maxPoints = Math.min(times.length, 72);
+  const startIndex = Math.max(0, times.length - maxPoints);
+
+  for (let i = startIndex; i < times.length; i++) {
+    const rawT = times[i];
+    const t = rawT ? rawT.replace('T', ' ') : '';
+    const p25 = typeof pm25Arr[i] === 'number' && !isNaN(pm25Arr[i]!) ? pm25Arr[i]!.toFixed(1) : '';
+    const p10 = typeof pm10Arr[i] === 'number' && !isNaN(pm10Arr[i]!) ? pm10Arr[i]!.toFixed(1) : '';
+    const no2 = typeof no2Arr[i] === 'number' && !isNaN(no2Arr[i]!) ? no2Arr[i]!.toFixed(1) : '';
+    const so2 = typeof so2Arr[i] === 'number' && !isNaN(so2Arr[i]!) ? so2Arr[i]!.toFixed(1) : '';
+    const co = typeof coArr[i] === 'number' && !isNaN(coArr[i]!) ? (coArr[i]! / 1000).toFixed(2) : '';
+    const o3 = typeof o3Arr[i] === 'number' && !isNaN(o3Arr[i]!) ? o3Arr[i]!.toFixed(1) : '';
+
+    rows.push(`${safeStation},${t},${p25},${p10},${no2},${so2},${co},${o3}`);
+  }
+
+  return rows.join('\n');
 }

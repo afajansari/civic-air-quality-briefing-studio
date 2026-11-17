@@ -6,6 +6,7 @@
 
 import https from 'https';
 import { generateLocalizedAdvisory } from './translator';
+import { resolveGrapStage, GrapStageDetails } from './grap-rules';
 import {
   CivicBrief,
   HotspotDiagnosis,
@@ -426,12 +427,14 @@ export async function generateCivicBrief(
     status: 'Recommended'
   }));
 
+  const grapStage: GrapStageDetails = resolveGrapStage(summary.averageAQI);
+
   const internalBriefingNote = {
     docRef: `AQ-BRIEF-${Date.now().toString(36).toUpperCase()}`,
     date: new Date().toISOString().split('T')[0],
     targetAudience: personaConfig.title,
     classification: summary.peakAQI > 300 ? 'URGENT REGULATORY ACTION REQUIRED' : 'OFFICIAL CIVIC INTELLIGENCE NOTE',
-    executiveSummary: `Analysis of ${parsedData.totalRecords} telemetry readings across ${stations.length} monitoring sites indicates an overall ambient AQI of ${summary.averageAQI} (${summary.category}), with ${summary.dominantPollutant} as the primary driving contaminant. Critical hotspot identified at ${summary.peakLocation} with peak AQI reaching ${summary.peakAQI} at ${summary.peakTimestamp}. Data integrity audit confirmed a telemetry completeness score of ${parsedData.completenessPercent}%, with ${anomalies.length} sensor anomalies and ${dataGaps.length} telemetry gaps identified and isolated.`,
+    executiveSummary: `Analysis of ${parsedData.totalRecords} telemetry readings across ${stations.length} monitoring sites indicates an overall ambient AQI of ${summary.averageAQI} (${summary.category}), with ${summary.dominantPollutant} as the primary driving contaminant. Critical hotspot identified at ${summary.peakLocation} with peak AQI reaching ${summary.peakAQI} at ${summary.peakTimestamp}. Data integrity audit confirmed a telemetry completeness score of ${parsedData.completenessPercent}%, with ${anomalies.length} sensor anomalies and ${dataGaps.length} telemetry gaps identified and isolated. Current Regulatory Status: ${grapStage.stageName}.`,
     metrics: {
       overallAQI: summary.averageAQI,
       category: summary.category,
@@ -451,6 +454,10 @@ export async function generateCivicBrief(
       dataGapsList: dataGaps.slice(0, 5)
     },
     complianceDirectives: [
+      ...(grapStage.id !== 'NORMAL' ? [
+        `[MANDATORY STATUTORY REGULATION: ${grapStage.stageName}] ${grapStage.primaryMandate}`,
+        ...grapStage.actions.filter(a => a.mandatory).map(a => `[${a.category} - ${a.enforcingAuthority}] ${a.measure}`)
+      ] : []),
       'Maintain continuous logging and verify sensor optical chambers for zero-drift baseline.',
       'Log execution timestamps of all municipal suppression interventions for verification in subsequent brief.'
     ]
@@ -461,6 +468,7 @@ export async function generateCivicBrief(
     generatedAt: new Date().toISOString(),
     persona,
     personaTitle: personaConfig.title,
+    grapStage,
     language,
     readingLevel,
     aiModelUsed: 'Civic Intelligence Rule Engine (Deterministic)',
@@ -612,4 +620,89 @@ USER QUESTION: "${question}"
 Provide a concise, highly accurate, and grounded response citing specific stations, timestamps, and row indices where relevant.`;
 
   return await callGeminiAPI(apiKey, prompt, 'Ground all responses strictly in the provided brief data.');
+}
+
+/**
+ * Real-Time Streaming Server-Sent Events (SSE) generator for Civic Intelligence Briefs
+ */
+export function createStreamingCivicBriefStream(
+  briefPromise: Promise<CivicBrief>
+): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    async start(controller) {
+      try {
+        controller.enqueue(encoder.encode(`event: status\ndata: ${JSON.stringify({ status: 'analyzing', message: 'Synthesizing verified civic telemetry...' })}\n\n`));
+
+        const brief = await briefPromise;
+
+        controller.enqueue(encoder.encode(`event: metadata\ndata: ${JSON.stringify({
+          grapStage: brief.grapStage,
+          summary: brief.summary,
+          persona: brief.personaTitle,
+          classification: brief.internalBriefingNote.classification
+        })}\n\n`));
+
+        const summaryText = brief.internalBriefingNote.executiveSummary;
+        const words = summaryText.split(' ');
+        for (let i = 0; i < words.length; i += 4) {
+          const chunk = words.slice(i, i + 4).join(' ') + ' ';
+          controller.enqueue(encoder.encode(`event: delta\ndata: ${JSON.stringify({ text: chunk })}\n\n`));
+          await new Promise(r => setTimeout(r, 12));
+        }
+
+        controller.enqueue(encoder.encode(`event: interventions\ndata: ${JSON.stringify({
+          actions: brief.internalBriefingNote.prioritizedActions,
+          hotspots: brief.internalBriefingNote.hotspotAnalysis,
+          complianceDirectives: brief.internalBriefingNote.complianceDirectives
+        })}\n\n`));
+
+        controller.enqueue(encoder.encode(`event: advisory\ndata: ${JSON.stringify({
+          citizenAdvisory: brief.citizenAdvisory
+        })}\n\n`));
+
+        controller.enqueue(encoder.encode(`event: traceability\ndata: ${JSON.stringify({
+          traceability: brief.traceabilityList,
+          integrityAudit: brief.internalBriefingNote.dataIntegrityAudit
+        })}\n\n`));
+
+        controller.enqueue(encoder.encode(`event: complete\ndata: ${JSON.stringify(brief)}\n\n`));
+        controller.close();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Streaming synthesis failed';
+        controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ error: message })}\n\n`));
+        controller.close();
+      }
+    }
+  });
+}
+
+/**
+ * Real-Time Streaming Server-Sent Events (SSE) for AI Chat Assistant
+ */
+export function createStreamingChatStream(
+  answerPromise: Promise<string>
+): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    async start(controller) {
+      try {
+        const answer = await answerPromise;
+        const words = answer.split(' ');
+        for (let i = 0; i < words.length; i += 2) {
+          const chunk = words.slice(i, i + 2).join(' ') + ' ';
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta: chunk })}\n\n`));
+          await new Promise(r => setTimeout(r, 20));
+        }
+        controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+        controller.close();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Chat streaming failed';
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: message })}\n\n`));
+        controller.close();
+      }
+    }
+  });
 }
