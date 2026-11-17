@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/skills.json",
+  "entries": [
+    {
+      "path": "C:/Users/Afaj-Ansari/.gemini/skills"
+    },
+    {
+      "path": "C:/Users/Afaj-Ansari/.agents/skills"
+    }
+  ]
+}

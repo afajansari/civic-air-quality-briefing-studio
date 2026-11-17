@@ -23,21 +23,17 @@ import {
   X,
   History,
   TrendingUp,
-  TrendingDown,
-  Box,
-  Sparkles
+  TrendingDown
 } from 'lucide-react';
-import { PolicyScenarioSimulator } from '@/components/PolicyScenarioSimulator';
-
-const Atmospheric3DChamber = dynamic(
-  () => import('@/components/3d/Atmospheric3DChamber').then((mod) => mod.Atmospheric3DChamber),
+const AtmosphericHeroViewport = dynamic(
+  () => import('@/components/hero/AtmosphericHeroViewport').then((m) => m.AtmosphericHeroViewport),
   {
     ssr: false,
     loading: () => (
-      <div className="h-72 sm:h-80 w-full animate-pulse bg-muted/20 rounded-xl border border-border flex items-center justify-center">
-        <span className="text-xs font-mono text-muted-foreground">Initializing WebGL 3D Atmospheric Chamber...</span>
+      <div className="h-96 w-full animate-pulse bg-slate-900/60 rounded-2xl border border-border flex items-center justify-center">
+        <span className="text-xs font-mono text-muted-foreground">Initializing Atmospheric Studio Hero...</span>
       </div>
-    )
+    ),
   }
 );
 
@@ -97,7 +93,26 @@ export default function Home() {
 
   // Interactive 3D & Policy Sandbox state
   const [simulatedReductionPct, setSimulatedReductionPct] = useState<number>(0);
-  const [show3DSimulator, setShow3DSimulator] = useState<boolean>(true);
+  const [activeHour, setActiveHour] = useState<number>(() => new Date().getHours());
+
+  // Parse diurnal PM2.5 readings from rawData
+  const pm25Diurnal = React.useMemo(() => {
+    const list: number[] = [];
+    if (!rawData) return list;
+    const lines = rawData.trim().split(/\r?\n/);
+    if (lines.length <= 1) return list;
+    const headers = lines[0].split(',').map((h) => h.trim().toLowerCase());
+    const idx = headers.findIndex((h) => h.includes('pm2.5') || h.includes('pm25') || h.includes('pm2_5'));
+    if (idx === -1) return list;
+    for (let i = 1; i < lines.length && i <= 25; i++) {
+      const parts = lines[i].split(',');
+      if (parts[idx]) {
+        const val = parseFloat(parts[idx]);
+        if (!isNaN(val)) list.push(val);
+      }
+    }
+    return list;
+  }, [rawData]);
 
   // Mount guard
   useEffect(() => {
@@ -446,57 +461,25 @@ ${note.complianceDirectives.map((d) => `- ${d}`).join('\n')}
             )}
           </div>
 
-          {/* Interactive 3D Atmospheric Chamber & Policy Sandbox Section */}
-          <section aria-labelledby="interactive-3d-policy-heading" className="no-print">
-            <div className="rounded-xl border border-border bg-card/60 backdrop-blur-sm overflow-hidden transition-all">
-              <div className="flex items-center justify-between px-4 py-2.5 bg-muted/30 border-b border-border/60">
-                <div className="flex items-center gap-2">
-                  <Box className="w-4 h-4 text-primary" aria-hidden="true" />
-                  <h2 id="interactive-3d-policy-heading" className="text-xs sm:text-sm font-bold text-foreground">
-                    Interactive 3D Atmospheric Smog Chamber &amp; CPCB Policy Sandbox
-                  </h2>
-                  <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-primary/10 text-primary border border-primary/20">
-                    WebGL Three.js • Live Inversion
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShow3DSimulator((prev) => !prev)}
-                  className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition focus:outline-none focus:ring-2 focus:ring-primary rounded px-2 py-1"
-                  aria-expanded={show3DSimulator}
-                >
-                  <span>{show3DSimulator ? 'Collapse 3D Sandbox' : 'Expand 3D Sandbox'}</span>
-                  {show3DSimulator ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                </button>
-              </div>
-
-              {show3DSimulator && (
-                <div className="p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 animate-in fade-in duration-200">
-                  {/* Left: 3D Atmospheric Smog & Particulate Chamber (7 cols) */}
-                  <div className="lg:col-span-7">
-                    <Atmospheric3DChamber
-                      aqi={activeAqi}
-                      pm25={activePm25}
-                      pm10={activePm10}
-                      cityName={currentCity}
-                      stationName={latestTelemetry?.station || currentCity}
-                      simulatedReductionPct={simulatedReductionPct}
-                    />
-                  </div>
-
-                  {/* Right: What-If Policy Scenario Simulator (5 cols) */}
-                  <div className="lg:col-span-5">
-                    <PolicyScenarioSimulator
-                      baseAqi={activeAqi}
-                      basePm25={activePm25}
-                      cityName={currentCity}
-                      onSimulationChange={(pct) => setSimulatedReductionPct(pct)}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </section>
+          {/* Dual-Mode Atmospheric & Geospatial Hero Viewport */}
+          <div className="no-print">
+            <AtmosphericHeroViewport
+              currentStation={latestTelemetry?.station || currentCity}
+              currentCity={currentCity}
+              activeAqi={activeAqi}
+              activePm25={activePm25}
+              activePm10={activePm10}
+              latestTelemetry={latestTelemetry}
+              pm25Diurnal={pm25Diurnal}
+              activeHour={activeHour}
+              onHourChange={setActiveHour}
+              onSelectStation={(cityName) => {
+                fetchLiveTelemetry(cityName);
+              }}
+              simulatedReductionPct={simulatedReductionPct}
+              onSimulationChange={setSimulatedReductionPct}
+            />
+          </div>
 
           {/* Split-Screen HUD Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">

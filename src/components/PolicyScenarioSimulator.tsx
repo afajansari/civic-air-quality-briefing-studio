@@ -2,7 +2,18 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sliders, RefreshCw, ShieldAlert, Sparkles, Car, Hammer, Factory, Droplets } from 'lucide-react';
+import {
+  Sliders,
+  RefreshCw,
+  ShieldAlert,
+  Sparkles,
+  Car,
+  Hammer,
+  Factory,
+  Droplets,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import { playStatusChime } from '@/lib/audio-alerts';
 
 interface PolicyScenarioSimulatorProps {
@@ -10,6 +21,8 @@ interface PolicyScenarioSimulatorProps {
   basePm25: number;
   cityName: string;
   onSimulationChange: (reductionPct: number) => void;
+  isFloating?: boolean;
+  className?: string;
 }
 
 export function PolicyScenarioSimulator({
@@ -17,11 +30,14 @@ export function PolicyScenarioSimulator({
   basePm25,
   cityName,
   onSimulationChange,
+  isFloating = false,
+  className = '',
 }: PolicyScenarioSimulatorProps) {
   const [trafficCut, setTrafficCut] = useState(0); // 0 to 50%
   const [constructionHalt, setConstructionHalt] = useState(0); // 0 to 100%
   const [industryScrubbing, setIndustryScrubbing] = useState(0); // 0 to 60%
   const [dustSuppression, setDustSuppression] = useState(0); // 0 to 100%
+  const [isDocked, setIsDocked] = useState(false);
 
   // Source apportionment weights based on Indian urban CPCB air quality studies:
   // Transport: ~30%, Construction: ~20%, Industry: ~25%, Dust: ~15%
@@ -113,8 +129,52 @@ export function PolicyScenarioSimulator({
     playStatusChime(750, 0.15);
   };
 
+  const handleApplyPresetGrap4 = () => {
+    setTrafficCut(50);
+    setConstructionHalt(100);
+    setIndustryScrubbing(60);
+    setDustSuppression(100);
+    const factor = (50 / 100) * 0.32 + 1.0 * 0.18 + (60 / 100) * 0.25 + (100 / 100) * 0.15;
+    const totalPct = Math.round(factor * 100);
+    onSimulationChange(totalPct);
+    playStatusChime(880, 0.2);
+  };
+
+  const handleApplyPresetCleanCommute = () => {
+    setTrafficCut(40);
+    setConstructionHalt(20);
+    setIndustryScrubbing(10);
+    setDustSuppression(50);
+    const factor = (40 / 100) * 0.32 + (20 / 100) * 0.18 + (10 / 100) * 0.25 + (50 / 100) * 0.15;
+    const totalPct = Math.round(factor * 100);
+    onSimulationChange(totalPct);
+    playStatusChime(660, 0.15);
+  };
+
+  if (isFloating && isDocked) {
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => setIsDocked(false)}
+        className="h-8 px-3 rounded-full bg-slate-900/90 backdrop-blur-md border border-primary/50 shadow-xl text-xs gap-1.5 font-bold animate-in fade-in"
+        aria-label="Expand policy scenario simulator"
+      >
+        <Sliders className="size-3.5 text-primary" />
+        <span className="text-white">Policy Sandbox</span>
+        {simulationResults.reductionPct > 0 && (
+          <Badge variant="secondary" className="px-1.5 py-0 text-[10px] bg-primary/20 text-primary">
+            -{simulationResults.reductionPct}%
+          </Badge>
+        )}
+        <ChevronDown className="size-3 text-slate-400 ml-0.5" />
+      </Button>
+    );
+  }
+
   return (
-    <Card className="border-border bg-card text-card-foreground shadow-sm">
+    <Card className={`border-border bg-card text-card-foreground shadow-sm ${className}`}>
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-border/50 gap-2">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
@@ -131,16 +191,29 @@ export function PolicyScenarioSimulator({
           </CardDescription>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleApplyPresetGrap4}
+            className="h-7 px-2 text-xs gap-1 border-purple-500/40 text-purple-400 hover:bg-purple-500/10"
+            title="Apply Stage IV Emergency curbs"
+          >
+            <ShieldAlert className="size-3" />
+            <span className="hidden sm:inline">GRAP IV</span>
+          </Button>
+
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={handleApplyPresetGrap3}
             className="h-7 px-2 text-xs gap-1 border-primary/40 text-primary hover:bg-primary/10"
+            title="Apply Stage III curbs"
           >
             <ShieldAlert className="size-3" />
-            <span>Apply GRAP III Mandates</span>
+            <span className="hidden sm:inline">GRAP III</span>
           </Button>
 
           <Button
@@ -153,6 +226,20 @@ export function PolicyScenarioSimulator({
             <RefreshCw className="size-3" />
             <span>Reset</span>
           </Button>
+
+          {isFloating && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsDocked(true)}
+              className="h-7 px-1.5 text-slate-400 hover:text-white"
+              title="Dock simulator to pill"
+              aria-label="Minimize policy simulator"
+            >
+              <ChevronUp className="size-3" />
+            </Button>
+          )}
         </div>
       </CardHeader>
 

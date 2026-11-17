@@ -12,6 +12,8 @@ interface Atmospheric3DChamberProps {
   cityName: string;
   stationName: string;
   simulatedReductionPct?: number;
+  activeHour?: number;
+  className?: string;
 }
 
 export function Atmospheric3DChamber({
@@ -21,6 +23,8 @@ export function Atmospheric3DChamber({
   cityName,
   stationName,
   simulatedReductionPct = 0,
+  activeHour,
+  className = '',
 }: Atmospheric3DChamberProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isRotating, setIsRotating] = useState(true);
@@ -282,8 +286,18 @@ export function Atmospheric3DChamber({
 
     animate();
 
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      } else {
+        animate();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('resize', handleResize);
       domElement.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mousemove', handleMouseMove);
@@ -308,7 +322,7 @@ export function Atmospheric3DChamber({
   const aqiCategory = getCategoryLabel(effectiveAqi);
 
   return (
-    <Card className="border-border bg-card text-card-foreground shadow-sm overflow-hidden flex flex-col">
+    <Card className={`border-border bg-card text-card-foreground shadow-sm overflow-hidden flex flex-col ${className}`}>
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 gap-3 border-b border-border/50">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
