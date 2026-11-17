@@ -367,7 +367,7 @@ export const DataIngestion: React.FC<DataIngestionProps> = ({
                     {group.stations.map((stn) => {
                       const isCurrent =
                         selectedStation.toLowerCase() === stn.toLowerCase() ||
-                        (stn.includes(selectedStation) && selectedStation.length > 3);
+                        (selectedStation.toLowerCase() === 'delhi' && stn === 'Delhi (Anand Vihar)');
                       return (
                         <button
                           key={stn}
@@ -376,7 +376,7 @@ export const DataIngestion: React.FC<DataIngestionProps> = ({
                           disabled={liveLoading}
                           aria-pressed={isCurrent}
                           aria-label={`Load live CAAQMS data for ${stn}`}
-                          className={`px-2.5 py-1 text-xs rounded-lg border transition flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:opacity-50 ${
+                          className={`px-2.5 py-1 text-xs rounded-lg border transition flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed ${
                             isCurrent
                               ? 'bg-emerald-500 text-slate-950 font-bold border-emerald-400 shadow-sm shadow-emerald-500/20'
                               : 'bg-slate-900/90 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
@@ -396,28 +396,33 @@ export const DataIngestion: React.FC<DataIngestionProps> = ({
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                if (searchCity.trim()) {
-                  handleFetchCityTelemetry(searchCity.trim());
-                }
+                if (liveLoading || !searchCity.trim()) return;
+                handleFetchCityTelemetry(searchCity.trim());
               }}
+              aria-busy={liveLoading}
               className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-3 border-t border-slate-800"
             >
               <div className="relative flex-1">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
+                {liveLoading ? (
+                  <Loader2 className="w-4 h-4 text-emerald-400 animate-spin absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
+                ) : (
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
+                )}
                 <input
                   type="text"
                   id="city-search-input"
                   value={searchCity}
                   onChange={(e) => setSearchCity(e.target.value)}
+                  disabled={liveLoading}
                   placeholder="Type any Indian city, ward, or district (e.g. Noida, Gurgaon, Surat, Bhopal, Chandigarh)..."
                   aria-label="Search Indian city, ward, or district"
-                  className="w-full bg-slate-900 text-xs text-white pl-9 pr-3 py-2 rounded-xl border border-slate-800 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 placeholder:text-slate-500"
+                  className="w-full bg-slate-900 text-xs text-white pl-9 pr-3 py-2 rounded-xl border border-slate-800 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 placeholder:text-slate-400 disabled:bg-slate-800 disabled:text-slate-400 disabled:border-slate-700 disabled:cursor-not-allowed"
                 />
               </div>
               <button
                 type="submit"
                 disabled={liveLoading || !searchCity.trim()}
-                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold text-xs rounded-xl transition focus:outline-none focus:ring-2 focus:ring-emerald-400 shrink-0"
+                className="flex items-center justify-center gap-1.5 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 disabled:text-slate-400 disabled:border-slate-700 disabled:cursor-not-allowed border border-transparent text-slate-950 font-bold text-xs rounded-xl transition focus:outline-none focus:ring-2 focus:ring-emerald-400 shrink-0"
               >
                 {liveLoading ? (
                   <>
@@ -432,6 +437,15 @@ export const DataIngestion: React.FC<DataIngestionProps> = ({
                 )}
               </button>
             </form>
+
+            {/* Live Search & Telemetry Status Announcement for Screen Readers */}
+            <div aria-live="polite" className="sr-only">
+              {liveLoading
+                ? `Querying live telemetry for ${searchCity || selectedStation}...`
+                : activeTelemetry?.current
+                ? `Live telemetry loaded for ${activeTelemetry.station || activeTelemetry.city || selectedStation}.`
+                : ''}
+            </div>
           </div>
 
           {/* Error Notice */}
@@ -458,7 +472,7 @@ export const DataIngestion: React.FC<DataIngestionProps> = ({
                   )}
                 </div>
                 <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
+                  <Clock className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
                   <span>
                     Observed: <strong className="text-slate-300 font-mono">{formatObservedTime(activeTelemetry.current.time)}</strong>
                   </span>
@@ -531,11 +545,11 @@ export const DataIngestion: React.FC<DataIngestionProps> = ({
                       </div>
                       <div className="flex items-baseline gap-1 my-1">
                         <span className={`text-lg font-mono font-black ${status.color}`}>{displayVal}</span>
-                        <span className="text-[10px] text-slate-500 font-medium">{item.unit}</span>
+                        <span className="text-[10px] text-slate-400 font-medium">{item.unit}</span>
                       </div>
                       <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-800/80 flex items-center justify-between">
                         <span className="truncate max-w-[70px]">{item.name}</span>
-                        <span className="text-slate-500 font-mono text-[9px]">{item.ref}</span>
+                        <span className="text-slate-400 font-mono text-[9px]">{item.ref}</span>
                       </div>
                     </div>
                   );
@@ -565,7 +579,7 @@ export const DataIngestion: React.FC<DataIngestionProps> = ({
               <div className="absolute right-3 bottom-3 flex items-center gap-2 bg-slate-900/90 backdrop-blur px-2.5 py-1 rounded-lg border border-slate-700 text-[10px] text-slate-300 pointer-events-none">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
                 <span>Detected: {detectedFormat}</span>
-                <span className="text-slate-500">|</span>
+                <span className="text-slate-400">|</span>
                 <span>{rawData.trim().split('\n').length} lines</span>
               </div>
             )}
@@ -621,7 +635,7 @@ export const DataIngestion: React.FC<DataIngestionProps> = ({
           type="button"
           onClick={onAnalyze}
           disabled={!rawData || isLoading}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 shadow-lg shadow-teal-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 shadow-lg shadow-teal-500/20 disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-400 disabled:border-slate-700 disabled:cursor-not-allowed transition transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-cyan-400"
         >
           <Sparkles className="w-4 h-4 text-slate-950" aria-hidden="true" />
           {isLoading ? 'Interpreting Data with AI...' : 'Generate Civic Intelligence Brief'}

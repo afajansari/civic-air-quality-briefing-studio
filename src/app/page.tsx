@@ -82,6 +82,7 @@ interface SavedBriefMeta {
 }
 
 export default function Home() {
+  const [isMounted, setIsMounted] = useState<boolean>(false);
   const [rawData, setRawData] = useState<string>('');
   const [currentCity, setCurrentCity] = useState<string>('Delhi');
   const [latestTelemetry, setLatestTelemetry] = useState<LiveTelemetryData | null>(null);
@@ -104,6 +105,10 @@ export default function Home() {
   const [isComparisonModalOpen, setIsComparisonModalOpen] = useState<boolean>(false);
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
   const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const fetchSavedBriefs = async () => {
     try {
@@ -250,11 +255,16 @@ ${note.complianceDirectives.map(d => `- ${d}`).join('\n')}
     URL.revokeObjectURL(url);
   };
 
+  const handleCityChange = useCallback((newCity: string) => {
+    setCurrentCity(newCity);
+    setCurrentBrief(null);
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 pb-16">
       <Header
         onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
-        hasCustomKey={!!apiKey}
+        hasCustomKey={isMounted && !!apiKey}
         onOpenHistoryModal={() => setIsHistoryDrawerOpen(true)}
         savedBriefCount={savedBriefs.length}
         onRefreshLive={handleRefreshLive}
@@ -263,15 +273,44 @@ ${note.complianceDirectives.map(d => `- ${d}`).join('\n')}
       />
 
       <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <noscript>
+          <div className="p-4 rounded-xl bg-amber-950/80 border border-amber-600 text-amber-200 text-xs flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" aria-hidden="true" />
+            <div>
+              <p className="font-semibold text-sm">JavaScript Required</p>
+              <p className="text-amber-300 mt-0.5">
+                JavaScript is required for the Civic Air Quality Briefing Studio to stream live telemetry and synthesize AI civic intelligence briefings. Please enable JavaScript in your browser settings.
+              </p>
+            </div>
+          </div>
+        </noscript>
+
         {errorMsg && (
-          <div className="p-4 rounded-xl bg-rose-950/60 border border-rose-800 text-xs text-rose-200 flex items-center justify-between gap-3">
+          <div role="alert" className="p-4 rounded-xl bg-rose-950/60 border border-rose-800 text-xs text-rose-200 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
               <span>{errorMsg}</span>
             </div>
-            <button onClick={() => setErrorMsg(null)} className="text-rose-400 hover:text-white">
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setErrorMsg(null);
+                  fetchLiveTelemetry(currentCity);
+                }}
+                className="px-3 py-1 bg-rose-900/80 hover:bg-rose-800 text-rose-100 rounded-lg border border-rose-700 font-semibold transition focus:outline-none focus:ring-2 focus:ring-rose-400 text-xs"
+              >
+                Retry Connection
+              </button>
+              <button
+                type="button"
+                onClick={() => setErrorMsg(null)}
+                aria-label="Dismiss error notification"
+                className="text-rose-400 hover:text-white p-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-400"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
 
@@ -282,7 +321,7 @@ ${note.complianceDirectives.map(d => `- ${d}`).join('\n')}
             onAnalyze={handleAnalyze}
             isLoading={isLoading}
             currentCity={currentCity}
-            onCityChange={setCurrentCity}
+            onCityChange={handleCityChange}
             latestTelemetry={latestTelemetry}
             onTelemetryLoaded={setLatestTelemetry}
           />
@@ -515,8 +554,8 @@ ${note.complianceDirectives.map(d => `- ${d}`).join('\n')}
                     <div className="text-[11px] text-slate-400">
                       Peak: {b.peakLocation} (AQI {b.peakAQI})
                     </div>
-                    <div className="text-[10px] text-slate-500 font-mono">
-                      Generated: {new Date(b.generatedAt).toLocaleString()}
+                    <div className="text-[10px] text-slate-400 font-mono">
+                      Generated: {isMounted ? new Date(b.generatedAt).toLocaleString() : ''}
                     </div>
                   </div>
                 ))}

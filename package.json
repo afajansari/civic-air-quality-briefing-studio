@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test test/unit.test.mjs"
+    "test": "node --test test/unit.test.mjs test/live-aqi.test.mjs",
+    "test:unit": "node --test test/unit.test.mjs",
+    "test:live": "node --test test/live-aqi.test.mjs"
   },
   "engines": {
     "node": ">=18.17.0"

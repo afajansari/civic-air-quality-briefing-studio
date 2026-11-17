@@ -426,3 +426,124 @@ test('Verification: Zero Static Mock / Foreign Dataset Strings in Production Sou
     `Found forbidden foreign/mock dataset strings in production sources:\n${violations.map(v => `  - "${v.term}" in src/${v.file}`).join('\n')}`
   );
 });
+
+test('Security Headers: next.config.mjs omits deprecated browsing-topics and configures Permissions-Policy', async () => {
+  const nextConfigModule = await import('../next.config.mjs');
+  const nextConfig = nextConfigModule.default;
+  const headersList = await nextConfig.headers();
+  const rootHeaderConfig = headersList.find(h => h.source === '/:path*');
+  assert.ok(rootHeaderConfig, 'Root path security header config must exist');
+
+  const permPolicy = rootHeaderConfig.headers.find(h => h.key === 'Permissions-Policy');
+  assert.ok(permPolicy, 'Permissions-Policy header must be defined');
+  assert.ok(!permPolicy.value.includes('browsing-topics'), 'Permissions-Policy must not contain browsing-topics');
+  assert.equal(permPolicy.value, 'camera=(), microphone=(), geolocation=()');
+});
+
+test('Live Telemetry Route Contract: 15-min ISR caching & edge Cache-Control headers', () => {
+  const routePath = path.resolve(__dirname, '..', 'src', 'app', 'api', 'live-aqi', 'route.ts');
+  assert.ok(fs.existsSync(routePath), 'src/app/api/live-aqi/route.ts must exist');
+  const routeContent = fs.readFileSync(routePath, 'utf8');
+
+  // Verify 15-minute ISR revalidation for air quality fetch
+  assert.ok(
+    routeContent.includes('next: { revalidate: 900 }'),
+    'Air quality telemetry fetch must declare next: { revalidate: 900 }'
+  );
+
+  // Verify 24-hour caching for geocoding
+  assert.ok(
+    routeContent.includes('next: { revalidate: 86400 }'),
+    'Geocoding fetch must declare next: { revalidate: 86400 }'
+  );
+
+  // Verify edge Cache-Control header
+  assert.ok(
+    routeContent.includes("'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=1800'"),
+    'Route must return Cache-Control: public, s-maxage=900, stale-while-revalidate=1800'
+  );
+});
+
+test('Frontend Form Accessibility & UI Polish Contract: DataIngestion.tsx', () => {
+  const compPath = path.resolve(__dirname, '..', 'src', 'components', 'DataIngestion.tsx');
+  assert.ok(fs.existsSync(compPath), 'DataIngestion.tsx must exist');
+  const content = fs.readFileSync(compPath, 'utf8');
+
+  // 1. Form onSubmit guard & aria-busy
+  assert.ok(
+    content.includes('aria-busy={liveLoading}'),
+    'DataIngestion form must specify aria-busy={liveLoading}'
+  );
+  assert.ok(
+    content.includes('if (liveLoading || !searchCity.trim()) return;'),
+    'Form onSubmit must prevent duplicate in-flight queries'
+  );
+
+  // 2. Input spinner & disabled state
+  assert.ok(
+    content.includes('Loader2') && content.includes('animate-spin text-emerald-400') ||
+    content.includes('Loader2 className="w-4 h-4 text-emerald-400 animate-spin'),
+    'Search input must display Loader2 spinner during active liveLoading'
+  );
+  assert.ok(
+    content.includes('disabled={liveLoading}'),
+    'Input must be disabled during liveLoading'
+  );
+
+  // 3. WCAG AA color contrast
+  assert.ok(
+    content.includes('placeholder:text-slate-400'),
+    'Input must use placeholder:text-slate-400 for WCAG AA compliance'
+  );
+  assert.ok(
+    content.includes('disabled:bg-slate-800 disabled:text-slate-400 disabled:border-slate-700'),
+    'Disabled styling must use accessible slate-400/slate-800 palette'
+  );
+
+  // 4. Polite screen reader announcements
+  assert.ok(
+    content.includes('aria-live="polite" className="sr-only"'),
+    'sr-only polite live region must announce search / loading status'
+  );
+
+  // 5. Regional chip exact highlight
+  assert.ok(
+    content.includes("selectedStation.toLowerCase() === 'delhi' && stn === 'Delhi (Anand Vihar)'"),
+    'Station chip comparison must isolate Anand Vihar when Delhi is selected'
+  );
+});
+
+test('Client Hydration Guard & Stabilization Contract: page.tsx', () => {
+  const pagePath = path.resolve(__dirname, '..', 'src', 'app', 'page.tsx');
+  assert.ok(fs.existsSync(pagePath), 'page.tsx must exist');
+  const content = fs.readFileSync(pagePath, 'utf8');
+
+  // 1. isMounted hydration guard
+  assert.ok(
+    content.includes('const [isMounted, setIsMounted] = useState<boolean>(false)') ||
+    content.includes('const [isMounted, setIsMounted] = useState(false)'),
+    'page.tsx must define isMounted client hydration guard'
+  );
+  assert.ok(
+    content.includes('setIsMounted(true)'),
+    'page.tsx must set isMounted to true in mount useEffect'
+  );
+
+  // 2. noscript guidance
+  assert.ok(
+    content.includes('<noscript>') && content.includes('JavaScript'),
+    'page.tsx must contain noscript fallback message'
+  );
+
+  // 3. Error retry button
+  assert.ok(
+    content.includes('Retry Connection'),
+    'Error alert banner must provide Retry Connection button'
+  );
+
+  // 4. Resetting currentBrief on city/station change
+  assert.ok(
+    content.includes('setCurrentBrief(null)'),
+    'page.tsx must reset currentBrief on station change'
+  );
+});
