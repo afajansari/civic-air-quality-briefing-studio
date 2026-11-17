@@ -17,6 +17,8 @@ import {
 import { detectDelimiter } from '@/lib/parser';
 import { INDIAN_DATASETS } from '@/lib/authentic-datasets';
 import { LiveTelemetryData } from '@/components/DataIngestion';
+import { AirQualityTrendChart } from '@/components/AirQualityTrendChart';
+import { PollutantBreakdownChart } from '@/components/PollutantBreakdownChart';
 
 export interface RegionalGroup {
   region: string;
@@ -165,7 +167,7 @@ function DiurnalSparkline({
   const areaD = `${pathD} L ${points[points.length - 1].x} ${height} L ${points[0].x} ${height} Z`;
 
   return (
-    <div className="space-y-1">
+    <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between text-[11px]">
         <span className="font-semibold text-slate-300 flex items-center gap-1.5">
           <TrendingUp className="w-3.5 h-3.5 text-cyan-400" />
@@ -342,7 +344,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
   const selectedStation = currentCity;
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden flex flex-col space-y-4 p-4 sm:p-5">
+    <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col gap-4 p-4 sm:p-5 text-card-foreground">
       {/* Studio Command Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
         <div>
@@ -431,7 +433,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
       </form>
 
       {/* Categorized Regional Chips */}
-      <div className="space-y-2">
+      <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
           <span className="flex items-center gap-1.5">
             <Layers className="w-3.5 h-3.5 text-cyan-400" />
@@ -486,7 +488,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
       </div>
 
       {/* Prominent Criteria Pollutant Cards / Gauges */}
-      <div className="space-y-2 pt-1">
+      <div className="flex flex-col gap-2 pt-1">
         <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
           <span className="flex items-center gap-1.5">
             <Activity className="w-3.5 h-3.5 text-emerald-400" />
@@ -502,7 +504,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
           {(() => {
             const status = getCpcbPollutantStatus('PM2.5', currentPM25);
             return (
-              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} space-y-1.5`}>
+              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} flex flex-col gap-1.5`}>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-extrabold text-white">PM2.5</span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass}`}>
@@ -539,7 +541,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
           {(() => {
             const status = getCpcbPollutantStatus('PM10', currentPM10);
             return (
-              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} space-y-1.5`}>
+              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} flex flex-col gap-1.5`}>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-extrabold text-white">PM10</span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass}`}>
@@ -576,7 +578,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
           {(() => {
             const status = getCpcbPollutantStatus('NO2', currentNO2);
             return (
-              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} space-y-1.5`}>
+              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} flex flex-col gap-1.5`}>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-extrabold text-white">NO2</span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass}`}>
@@ -611,7 +613,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
           {(() => {
             const status = getCpcbPollutantStatus('SO2', currentSO2);
             return (
-              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} space-y-1.5`}>
+              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} flex flex-col gap-1.5`}>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-extrabold text-white">SO2</span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass}`}>
@@ -644,7 +646,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
           {(() => {
             const status = getCpcbPollutantStatus('CO', currentCO);
             return (
-              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} space-y-1.5`}>
+              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} flex flex-col gap-1.5`}>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-extrabold text-white">CO</span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass}`}>
@@ -677,7 +679,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
           {(() => {
             const status = getCpcbPollutantStatus('O3', currentO3);
             return (
-              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} space-y-1.5`}>
+              <div className={`p-3 rounded-xl bg-slate-950/80 border ${status.borderClass} flex flex-col gap-1.5`}>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-extrabold text-white">O3</span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass}`}>
@@ -708,23 +710,23 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
         </div>
       </div>
 
-      {/* Mini 24-hr Diurnal Sparklines for PM2.5 and PM10 */}
-      <div className="space-y-3 pt-1">
-        <DiurnalSparkline
-          data={pm25Diurnal}
-          color="#38bdf8"
-          gradientId="spark-pm25-grad"
-          label="PM2.5"
-          unit="µg/m³"
-          currentVal={currentPM25}
+      {/* Interactive shadcn Charts: Diurnal Trend & Criteria Breakdown */}
+      <div className="flex flex-col gap-4 pt-1">
+        <AirQualityTrendChart
+          csvData={rawData}
+          stationName={latestTelemetry?.station || currentCity}
+          city={currentCity}
+          latestAqi={currentPM25 != null ? Math.round(currentPM25 * 2) : null}
         />
-        <DiurnalSparkline
-          data={pm10Diurnal}
-          color="#34d399"
-          gradientId="spark-pm10-grad"
-          label="PM10"
-          unit="µg/m³"
-          currentVal={currentPM10}
+        <PollutantBreakdownChart
+          currentTelemetry={{
+            pm25: currentPM25,
+            pm10: currentPM10,
+            no2: currentNO2,
+            so2: currentSO2,
+            co: currentCO,
+            o3: currentO3,
+          }}
         />
       </div>
 
@@ -750,7 +752,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
         </button>
 
         {isInspectorOpen && (
-          <div className="p-4 border-t border-slate-800 space-y-3 animate-in fade-in duration-200">
+          <div className="p-4 border-t border-slate-800 flex flex-col gap-3 animate-in fade-in duration-200">
             {/* Quick Presets & Upload Controls */}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="text-[11px] font-semibold text-slate-400">
@@ -785,7 +787,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
                     setRawData(ds.csvData);
                     if (ds.cityKey) onCityChange(ds.cityKey);
                   }}
-                  className="p-2.5 text-left rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 transition space-y-1"
+                  className="p-2.5 text-left rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-slate-700 transition flex flex-col gap-1"
                 >
                   <div className="text-xs font-bold text-white line-clamp-1">{ds.name}</div>
                   <div className="text-[10px] text-slate-400 line-clamp-1">{ds.description}</div>
@@ -794,7 +796,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
             </div>
 
             {/* Editable Raw Data Textarea */}
-            <div className="space-y-1">
+            <div className="flex flex-col gap-1">
               <label htmlFor="raw-telemetry-editor" className="text-[11px] font-mono text-slate-400">
                 Tabular Telemetry Feed (CSV / TSV / SPCB Stream):
               </label>

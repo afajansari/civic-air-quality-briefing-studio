@@ -1,5 +1,6 @@
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
+import { ThemeProvider } from 'next-themes';
 import '@/styles/globals.css';
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -14,9 +15,11 @@ export default function App({ Component, pageProps }: AppProps) {
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="dark min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500 selection:text-slate-950">
-        <Component {...pageProps} />
-      </div>
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem themes={['light', 'dark', 'theme-cpcb']}>
+        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary selection:text-primary-foreground">
+          <Component {...pageProps} />
+        </div>
+      </ThemeProvider>
     </>
   );
 }

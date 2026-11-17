@@ -331,7 +331,7 @@ ${note.complianceDirectives.map((d) => `- ${d}`).join('\n')}
           hasCustomKey={isMounted && !!apiKey}
         />
 
-        <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4">
+        <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col gap-4">
           <noscript>
             <div className="p-4 rounded-xl bg-amber-950/80 border border-amber-600 text-amber-200 text-xs flex items-center gap-3">
               <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" aria-hidden="true" />
@@ -421,7 +421,7 @@ ${note.complianceDirectives.map((d) => `- ${d}`).join('\n')}
           {/* Split-Screen HUD Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
             {/* Left Column: High-Density Live Telemetry Studio (5 Cols) */}
-            <div className="lg:col-span-5 space-y-4">
+            <div className="lg:col-span-5 flex flex-col gap-4">
               <LiveTelemetryStudio
                 rawData={rawData}
                 setRawData={setRawData}
@@ -436,7 +436,7 @@ ${note.complianceDirectives.map((d) => `- ${d}`).join('\n')}
             </div>
 
             {/* Right Column: Streaming Civic Brief Terminal (7 Cols) */}
-            <div className="lg:col-span-7 space-y-4">
+            <div className="lg:col-span-7 flex flex-col gap-4">
               <StreamingBriefTerminal
                 brief={currentBrief}
                 isLoading={isLoading}
@@ -526,7 +526,7 @@ ${note.complianceDirectives.map((d) => `- ${d}`).join('\n')}
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto py-4 space-y-3">
+              <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-3">
                 {savedBriefs.length === 0 ? (
                   <div className="text-center py-12 text-slate-500 text-xs">
                     No briefs saved yet. Generate a brief to track changes.
@@ -535,7 +535,7 @@ ${note.complianceDirectives.map((d) => `- ${d}`).join('\n')}
                   savedBriefs.map((b) => (
                     <div
                       key={b.id}
-                      className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 transition space-y-2"
+                      className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 transition flex flex-col gap-2"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-white">{b.personaTitle}</span>
