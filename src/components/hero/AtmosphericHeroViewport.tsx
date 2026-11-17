@@ -65,27 +65,27 @@ export function AtmosphericHeroViewport({
       className={`flex flex-col gap-3 ${className}`}
     >
       {/* Viewport Canvas Card with Mode Selector Toolbar */}
-      <Card className="border-border bg-card shadow-lg rounded-2xl overflow-hidden relative">
+      <Card className="border-border bg-card shadow-lg rounded-xl overflow-hidden relative">
         {/* Top Floating Viewport Toolbar */}
-        <div className="flex flex-wrap items-center justify-between px-4 py-2.5 bg-slate-900/90 backdrop-blur-md border-b border-border/60 gap-2 relative z-20">
+        <div className="flex flex-wrap items-center justify-between px-4 py-2.5 bg-[#0e1015]/90 backdrop-blur-md border-b border-border/60 gap-2 relative z-20">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="size-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
-            <span className="text-xs sm:text-sm font-black text-foreground tracking-wide flex items-center gap-1.5 truncate">
-              ATMOSPHERIC STUDIO
+            <div className="size-2 rounded-full bg-primary animate-ping shrink-0" />
+            <span className="text-xs sm:text-sm font-bold text-foreground tracking-wide flex items-center gap-1.5 truncate">
+              ATMOSPHERIC BRIEFING STUDIO
               <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                {viewportMode === '3d' ? '3D WebGL Particulate Engine' : 'Indian CAAQMS Station Grid'}
+                {viewportMode === '3d' ? '3D WebGL Particulate Engine' : 'Survey of India CAAQMS Grid'}
               </span>
             </span>
           </div>
 
           {/* Mode Switcher Pill */}
-          <div className="flex items-center gap-1 p-0.5 rounded-lg bg-slate-950/80 border border-slate-800">
+          <div className="flex items-center gap-1 p-0.5 rounded-lg bg-[#090a0c] border border-border">
             <Button
               type="button"
               variant={viewportMode === '3d' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewportMode('3d')}
-              className="h-7 px-3 text-xs font-bold gap-1.5"
+              className="h-7 px-3 text-xs font-semibold gap-1.5"
             >
               <Box className="size-3.5" />
               <span>3D Chamber</span>
@@ -96,7 +96,7 @@ export function AtmosphericHeroViewport({
               variant={viewportMode === 'map' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewportMode('map')}
-              className="h-7 px-3 text-xs font-bold gap-1.5"
+              className="h-7 px-3 text-xs font-semibold gap-1.5"
             >
               <Map className="size-3.5" />
               <span>Geospatial Map</span>
@@ -105,7 +105,7 @@ export function AtmosphericHeroViewport({
         </div>
 
         {/* Canvas Body */}
-        <CardContent className="p-0 relative min-h-[380px] sm:min-h-[440px] bg-slate-950">
+        <CardContent className="p-0 relative min-h-[380px] sm:min-h-[440px] bg-[#090a0c]">
           {viewportMode === '3d' ? (
             <Atmospheric3DChamber
               aqi={activeAqi}
@@ -145,13 +145,13 @@ export function AtmosphericHeroViewport({
               cityName={currentCity}
               onSimulationChange={onSimulationChange}
               isFloating={true}
-              className="border-border/60 bg-slate-900/85 backdrop-blur-md shadow-2xl"
+              className="border-border/60 subtle-glass shadow-2xl"
             />
           </div>
         </CardContent>
 
         {/* Base 24-Hour Diurnal Timeline Scrubber */}
-        <div className="p-3 bg-slate-950/95 border-t border-border/60 relative z-20">
+        <div className="p-3 bg-[#090a0c] border-t border-border/60 relative z-20">
           <DiurnalTimelineScrubber
             activeHour={activeHour}
             onHourChange={onHourChange}

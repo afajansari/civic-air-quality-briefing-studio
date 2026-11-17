@@ -55,10 +55,10 @@ export const ModernUtilityHeader: React.FC<ModernUtilityHeaderProps> = ({
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex items-center gap-2.5 shrink-0">
             <div
-              className="size-8 rounded-lg bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-500 flex items-center justify-center text-slate-950 font-black shadow-md shadow-emerald-500/10"
+              className="size-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-sm border border-primary/40"
               aria-hidden="true"
             >
-              <Wind className="size-4 text-slate-950" />
+              <Wind className="size-4 text-primary-foreground" />
             </div>
             <div className="hidden sm:block">
               <span className="text-xs font-black tracking-tight text-foreground flex items-center gap-1.5">

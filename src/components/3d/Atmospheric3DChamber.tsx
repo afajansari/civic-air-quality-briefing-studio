@@ -1,9 +1,11 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+'use client';
+
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import * as THREE from 'three';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Box, RotateCcw, Play, Pause, Eye, Wind, Layers } from 'lucide-react';
+import { Box, RotateCcw, Play, Pause, Eye, Wind, Layers, Droplets, Sun } from 'lucide-react';
 
 interface Atmospheric3DChamberProps {
   aqi: number;
@@ -16,6 +18,25 @@ interface Atmospheric3DChamberProps {
   className?: string;
 }
 
+// Statutory Indian CPCB IS 5182 Color Standards for WebGL
+function getCpcbColor(val: number): THREE.Color {
+  if (val <= 50) return new THREE.Color(0x00b050); // Good (Emerald)
+  if (val <= 100) return new THREE.Color(0x70ad47); // Satisfactory (Light Green)
+  if (val <= 200) return new THREE.Color(0xeab308); // Moderate (Amber)
+  if (val <= 300) return new THREE.Color(0xea580c); // Poor (CPCB Orange)
+  if (val <= 400) return new THREE.Color(0xdc2626); // Very Poor (Red)
+  return new THREE.Color(0x991b1b); // Severe (Crimson Maroon)
+}
+
+function getCpcbLabel(val: number): string {
+  if (val <= 50) return 'Good';
+  if (val <= 100) return 'Satisfactory';
+  if (val <= 200) return 'Moderate';
+  if (val <= 300) return 'Poor';
+  if (val <= 400) return 'Very Poor';
+  return 'Severe';
+}
+
 export function Atmospheric3DChamber({
   aqi,
   pm25,
@@ -23,25 +44,31 @@ export function Atmospheric3DChamber({
   cityName,
   stationName,
   simulatedReductionPct = 0,
-  activeHour,
+  activeHour = 12,
   className = '',
 }: Atmospheric3DChamberProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isRotating, setIsRotating] = useState(true);
   const [showInversion, setShowInversion] = useState(true);
   const [showWind, setShowWind] = useState(true);
+  const [showHumidity, setShowHumidity] = useState(false);
   const [effectiveAqi, setEffectiveAqi] = useState(aqi);
 
   // Animation & Three.js references
   const animFrameRef = useRef<number | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const particlesRef = useRef<THREE.Points | null>(null);
+  const pm25ParticlesRef = useRef<THREE.Points | null>(null);
+  const pm10ParticlesRef = useRef<THREE.Points | null>(null);
   const inversionRef = useRef<THREE.Mesh | null>(null);
+  const sunMeshRef = useRef<THREE.Mesh | null>(null);
+  const sunLightRef = useRef<THREE.DirectionalLight | null>(null);
+
+  // Interactive camera interaction refs
   const isMouseDownRef = useRef(false);
   const mousePosRef = useRef({ x: 0, y: 0 });
-  const cameraRotationRef = useRef({ x: 0.35, y: 0.5 });
-  const zoomRef = useRef(35);
+  const cameraRotationRef = useRef({ x: 0.35, y: 0.6 });
+  const zoomRef = useRef(36);
 
   // Calculate effective simulated AQI
   useEffect(() => {
@@ -49,78 +76,131 @@ export function Atmospheric3DChamber({
     setEffectiveAqi(reduced);
   }, [aqi, simulatedReductionPct]);
 
-  // Determine CPCB category color for 3D particles
-  const getCategoryColor = useCallback((val: number): THREE.Color => {
-    if (val <= 50) return new THREE.Color(0x10b981); // Good (Emerald)
-    if (val <= 100) return new THREE.Color(0x14b8a6); // Satisfactory (Teal)
-    if (val <= 200) return new THREE.Color(0xf59e0b); // Moderate (Amber)
-    if (val <= 300) return new THREE.Color(0xf97316); // Poor (Orange)
-    if (val <= 400) return new THREE.Color(0xef4444); // Very Poor (Red)
-    return new THREE.Color(0xa855f7); // Severe (Purple)
-  }, []);
+  // Optical Atmospheric Visibility (Koschmieder extinction law):
+  // High AQI (>400) drops visibility below 300m, clear air (AQI <50) reaches ~15km
+  const visibilityEstimate = useMemo(() => {
+    if (effectiveAqi <= 50) return { distance: '> 15 km', rating: 'Clear Horizon', density: 0.003 };
+    if (effectiveAqi <= 100) return { distance: '10 - 15 km', rating: 'Good Horizon', density: 0.007 };
+    if (effectiveAqi <= 200) return { distance: '3 - 6 km', rating: 'Moderate Haze', density: 0.016 };
+    if (effectiveAqi <= 300) return { distance: '1.2 - 2.5 km', rating: 'Dense Smog', density: 0.032 };
+    if (effectiveAqi <= 400) return { distance: '500 - 1000 m', rating: 'Very Dense Smog', density: 0.052 };
+    return { distance: '< 300 m', rating: 'Severe Blind Smog', density: 0.076 };
+  }, [effectiveAqi]);
 
-  const getCategoryLabel = (val: number): string => {
-    if (val <= 50) return 'Good';
-    if (val <= 100) return 'Satisfactory';
-    if (val <= 200) return 'Moderate';
-    if (val <= 300) return 'Poor';
-    if (val <= 400) return 'Very Poor';
-    return 'Severe';
-  };
+  // Atmospheric solar transmission % (Mie scattering attenuation)
+  const solarTransmissionPct = useMemo(() => {
+    return Math.max(12, Math.round(100 - (effectiveAqi / 500) * 85));
+  }, [effectiveAqi]);
+
+  // Thermal inversion height: drops during cold nocturnal hours (20:00 - 07:00), rises in daytime
+  const inversionCeilingY = useMemo(() => {
+    if (activeHour >= 11 && activeHour <= 16) return 13.5; // Afternoon vertical convection
+    if (activeHour >= 8 && activeHour <= 10) return 9.5; // Morning breakup
+    if (activeHour >= 17 && activeHour <= 19) return 10.0; // Sunset compression
+    return 6.5; // Cold nocturnal boundary layer (severe trapping)
+  }, [activeHour]);
 
   useEffect(() => {
     if (!containerRef.current) return;
     const container = containerRef.current;
     const width = container.clientWidth;
-    const height = container.clientHeight || 340;
+    const height = container.clientHeight || 360;
 
-    // 1. Scene & Camera Setup
+    // 1. Scene & Atmosphere Setup
     const scene = new THREE.Scene();
     sceneRef.current = scene;
-    scene.background = new THREE.Color(0x020617); // Dark Slate background
-    scene.fog = new THREE.FogExp2(0x020617, 0.015);
 
+    // Background color: Technical Obsidian Cleanroom `#090a0c`
+    const baseColorHex = 0x090a0c;
+    scene.background = new THREE.Color(baseColorHex);
+
+    // Dynamic Fog with physical optical density
+    const fogDensity = showHumidity
+      ? visibilityEstimate.density * 1.45
+      : visibilityEstimate.density;
+
+    // Fog color shifts from cool obsidian in clean air to particulate-stained crimson-gray in severe smog
+    const fogColor = new THREE.Color(baseColorHex);
+    if (effectiveAqi > 200) {
+      const smogTint = effectiveAqi > 400 ? new THREE.Color(0x281212) : new THREE.Color(0x221812);
+      fogColor.lerp(smogTint, Math.min(0.85, (effectiveAqi - 200) / 300));
+    }
+    if (showHumidity) {
+      fogColor.lerp(new THREE.Color(0x1a212d), 0.35); // Cool moisture scattering
+    }
+    scene.fog = new THREE.FogExp2(fogColor.getHex(), fogDensity);
+
+    // 2. Camera
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 1000);
     camera.position.set(0, 18, zoomRef.current);
     camera.lookAt(0, 4, 0);
 
-    // 2. Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    // 3. WebGL Renderer with High-DPI & Tone Mapping
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance',
+    });
     rendererRef.current = renderer;
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
-    // 3. Ambient & Directional Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    // 4. Lighting & Solar Mie Scattering
+    const ambientLight = new THREE.AmbientLight(0xffffff, effectiveAqi > 300 ? 0.45 : 0.7);
     scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight(0x38bdf8, 1.2);
-    dirLight.position.set(20, 40, 20);
-    scene.add(dirLight);
 
-    // 4. Ground Grid & Stylized Urban City Blocks
-    const gridHelper = new THREE.GridHelper(40, 20, 0x1e293b, 0x0f172a);
+    // Directional Sun Light: shifts from bright gold-white to diffuse crimson/amber in severe smog
+    const sunColor = new THREE.Color(0xfff7ed);
+    if (effectiveAqi > 200) {
+      const sunsetSmogColor = effectiveAqi > 350 ? new THREE.Color(0xdc2626) : new THREE.Color(0xea580c);
+      sunColor.lerp(sunsetSmogColor, (effectiveAqi - 200) / 300);
+    }
+    const sunIntensity = Math.max(0.35, 1.4 * (solarTransmissionPct / 100));
+    const sunLight = new THREE.DirectionalLight(sunColor.getHex(), sunIntensity);
+    sunLight.position.set(24, 32, -28);
+    sunLightRef.current = sunLight;
+    scene.add(sunLight);
+
+    // Visible Solar Disc in Horizon Skybox (simulating filtered sun struggling through smog)
+    const sunGeo = new THREE.SphereGeometry(2.2, 24, 24);
+    const sunMat = new THREE.MeshBasicMaterial({
+      color: sunColor,
+      transparent: true,
+      opacity: effectiveAqi > 300 ? 0.65 : 0.95,
+    });
+    const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+    sunMesh.position.set(24, 32, -28);
+    sunMeshRef.current = sunMesh;
+    scene.add(sunMesh);
+
+    // 5. Urban Topography Ground & Street Canyons (Precision Matte Architecture)
+    const gridHelper = new THREE.GridHelper(44, 22, 0x232730, 0x111317);
     gridHelper.position.y = 0;
     scene.add(gridHelper);
 
-    // Urban City Geometry (Stylized buildings)
     const buildingGroup = new THREE.Group();
     const buildingMat = new THREE.MeshStandardMaterial({
-      color: 0x1e293b,
-      roughness: 0.7,
-      metalness: 0.2,
-      wireframe: false,
+      color: 0x14171f,
+      roughness: 0.85,
+      metalness: 0.15,
     });
-    const edgeMat = new THREE.LineBasicMaterial({ color: 0x334155 });
+    const edgeMat = new THREE.LineBasicMaterial({
+      color: 0x262b36,
+      transparent: true,
+      opacity: 0.7,
+    });
 
-    // Seeded procedural buildings
-    for (let x = -14; x <= 14; x += 4) {
-      for (let z = -14; z <= 14; z += 4) {
-        if (Math.abs(x) < 2 && Math.abs(z) < 2) continue; // Center open for station sensor
-        const heightMultiplier = Math.sin(x * 0.5) * Math.cos(z * 0.5) + 1.2;
-        const bHeight = Math.max(1.5, Math.abs(heightMultiplier) * 4);
-        const geo = new THREE.BoxGeometry(2.4, bHeight, 2.4);
+    // Procedural urban block array
+    for (let x = -16; x <= 16; x += 4) {
+      for (let z = -16; z <= 16; z += 4) {
+        if (Math.abs(x) < 2.5 && Math.abs(z) < 2.5) continue; // Sensor plaza clearance
+        const bSeed = Math.sin(x * 0.45) * Math.cos(z * 0.45) + 1.25;
+        const bHeight = Math.max(1.8, Math.abs(bSeed) * 4.2);
+        const geo = new THREE.BoxGeometry(2.5, bHeight, 2.5);
         const building = new THREE.Mesh(geo, buildingMat);
         building.position.set(x, bHeight / 2, z);
         buildingGroup.add(building);
@@ -132,65 +212,110 @@ export function Atmospheric3DChamber({
       }
     }
 
-    // Central CAAQMS Sensor Beacon Tower
-    const beaconGeo = new THREE.CylinderGeometry(0.4, 0.6, 6, 8);
-    const beaconMat = new THREE.MeshStandardMaterial({
-      color: 0x38bdf8,
-      emissive: 0x0284c7,
-      emissiveIntensity: 0.6,
+    // Central Official CAAQMS Monitoring Station Mast
+    const mastGeo = new THREE.CylinderGeometry(0.3, 0.5, 6.5, 12);
+    const mastColor = getCpcbColor(effectiveAqi);
+    const mastMat = new THREE.MeshStandardMaterial({
+      color: mastColor,
+      emissive: mastColor,
+      emissiveIntensity: 0.5,
+      metalness: 0.4,
+      roughness: 0.3,
     });
-    const beacon = new THREE.Mesh(beaconGeo, beaconMat);
-    beacon.position.set(0, 3, 0);
-    buildingGroup.add(beacon);
+    const mast = new THREE.Mesh(mastGeo, mastMat);
+    mast.position.set(0, 3.25, 0);
+    buildingGroup.add(mast);
+
+    // Sensor intake head
+    const intakeGeo = new THREE.SphereGeometry(0.7, 16, 16);
+    const intakeMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.2,
+      metalness: 0.8,
+    });
+    const intake = new THREE.Mesh(intakeGeo, intakeMat);
+    intake.position.set(0, 6.6, 0);
+    buildingGroup.add(intake);
 
     scene.add(buildingGroup);
 
-    // 5. Thermal Inversion Ceiling Layer (Translucent disc clamping smog)
-    const inversionGeo = new THREE.CylinderGeometry(20, 20, 0.4, 32);
+    // 6. Nocturnal Thermal Inversion Boundary Layer (Physically Clamps Particulates)
+    const inversionGeo = new THREE.CylinderGeometry(24, 24, 0.35, 36);
     const inversionMat = new THREE.MeshBasicMaterial({
-      color: 0xf97316,
+      color: 0xea580c,
       transparent: true,
-      opacity: 0.18,
+      opacity: effectiveAqi > 200 ? 0.22 : 0.12,
       wireframe: true,
     });
     const inversionMesh = new THREE.Mesh(inversionGeo, inversionMat);
-    inversionMesh.position.set(0, 11, 0);
+    inversionMesh.position.set(0, inversionCeilingY, 0);
     inversionRef.current = inversionMesh;
     scene.add(inversionMesh);
 
-    // 6. Volumetric Particulate Point Cloud (PM2.5 & PM10)
-    const particleCount = Math.min(5000, Math.max(1000, effectiveAqi * 12));
-    const particleGeo = new THREE.BufferGeometry();
-    const posArray = new Float32Array(particleCount * 3);
-    const velocityArray = new Float32Array(particleCount * 3);
+    // 7. Layer A: Fine PM2.5 Micro-Aerosol Point Cloud (Brownian suspension & wind drift)
+    const pm25Count = Math.min(4200, Math.max(1200, effectiveAqi * 10));
+    const pm25Geo = new THREE.BufferGeometry();
+    const pm25Pos = new Float32Array(pm25Count * 3);
+    const pm25Vel = new Float32Array(pm25Count * 3);
 
-    for (let i = 0; i < particleCount * 3; i += 3) {
-      posArray[i] = (Math.random() - 0.5) * 36;
-      posArray[i + 1] = Math.random() * 12; // Height clamped below inversion ceiling
-      posArray[i + 2] = (Math.random() - 0.5) * 36;
+    for (let i = 0; i < pm25Count * 3; i += 3) {
+      pm25Pos[i] = (Math.random() - 0.5) * 40;
+      pm25Pos[i + 1] = Math.random() * (showInversion ? inversionCeilingY : 16);
+      pm25Pos[i + 2] = (Math.random() - 0.5) * 40;
 
-      // Drift velocities
-      velocityArray[i] = (Math.random() - 0.5) * 0.04;
-      velocityArray[i + 1] = (Math.random() - 0.5) * 0.02;
-      velocityArray[i + 2] = (Math.random() - 0.5) * 0.04;
+      // Brownian micro-drift velocities
+      pm25Vel[i] = (Math.random() - 0.5) * 0.035;
+      pm25Vel[i + 1] = (Math.random() - 0.5) * 0.02;
+      pm25Vel[i + 2] = (Math.random() - 0.5) * 0.035;
     }
 
-    particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    pm25Geo.setAttribute('position', new THREE.BufferAttribute(pm25Pos, 3));
 
-    const particleColor = getCategoryColor(effectiveAqi);
-    const particleMat = new THREE.PointsMaterial({
-      color: particleColor,
-      size: effectiveAqi > 200 ? 0.45 : 0.28,
+    const pm25Mat = new THREE.PointsMaterial({
+      color: mastColor,
+      size: effectiveAqi > 250 ? 0.38 : 0.24,
       transparent: true,
-      opacity: effectiveAqi > 300 ? 0.85 : 0.65,
+      opacity: effectiveAqi > 300 ? 0.8 : 0.55,
       blending: THREE.AdditiveBlending,
     });
 
-    const particles = new THREE.Points(particleGeo, particleMat);
-    particlesRef.current = particles;
-    scene.add(particles);
+    const pm25Points = new THREE.Points(pm25Geo, pm25Mat);
+    pm25ParticlesRef.current = pm25Points;
+    scene.add(pm25Points);
 
-    // 7. Interactive Mouse / Touch Drag Handlers
+    // 8. Layer B: Coarse PM10 Dust & Fly-Ash Particulates (Street-level sedimentation & tumbling)
+    const pm10Count = Math.min(1800, Math.max(500, Math.round(effectiveAqi * 4)));
+    const pm10Geo = new THREE.BufferGeometry();
+    const pm10Pos = new Float32Array(pm10Count * 3);
+    const pm10Vel = new Float32Array(pm10Count * 3);
+
+    for (let i = 0; i < pm10Count * 3; i += 3) {
+      pm10Pos[i] = (Math.random() - 0.5) * 38;
+      // Coarse dust concentrates near ground level (0.2m to 5.5m)
+      pm10Pos[i + 1] = Math.random() * 5.5 + 0.2;
+      pm10Pos[i + 2] = (Math.random() - 0.5) * 38;
+
+      // Gravitational tumbling velocities
+      pm10Vel[i] = (Math.random() - 0.5) * 0.05;
+      pm10Vel[i + 1] = -Math.random() * 0.015 - 0.005; // Negative settling velocity
+      pm10Vel[i + 2] = (Math.random() - 0.5) * 0.05;
+    }
+
+    pm10Geo.setAttribute('position', new THREE.BufferAttribute(pm10Pos, 3));
+
+    const pm10Mat = new THREE.PointsMaterial({
+      color: effectiveAqi > 200 ? 0xd97706 : 0x94a3b8, // Amber dust vs gray dust
+      size: 0.62, // Distinctly larger than PM2.5
+      transparent: true,
+      opacity: 0.75,
+      blending: THREE.NormalBlending, // Physical non-glowing grit
+    });
+
+    const pm10Points = new THREE.Points(pm10Geo, pm10Mat);
+    pm10ParticlesRef.current = pm10Points;
+    scene.add(pm10Points);
+
+    // 9. Interactive Drag / Orbit Handlers
     const handleMouseDown = (e: MouseEvent) => {
       isMouseDownRef.current = true;
       mousePosRef.current = { x: e.clientX, y: e.clientY };
@@ -202,10 +327,10 @@ export function Atmospheric3DChamber({
       const deltaY = e.clientY - mousePosRef.current.y;
       mousePosRef.current = { x: e.clientX, y: e.clientY };
 
-      cameraRotationRef.current.y += deltaX * 0.008;
+      cameraRotationRef.current.y += deltaX * 0.007;
       cameraRotationRef.current.x = Math.max(
         0.1,
-        Math.min(1.2, cameraRotationRef.current.x + deltaY * 0.008)
+        Math.min(1.25, cameraRotationRef.current.x + deltaY * 0.007)
       );
     };
 
@@ -215,7 +340,7 @@ export function Atmospheric3DChamber({
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      zoomRef.current = Math.max(18, Math.min(60, zoomRef.current + e.deltaY * 0.03));
+      zoomRef.current = Math.max(16, Math.min(65, zoomRef.current + e.deltaY * 0.03));
     };
 
     const domElement = renderer.domElement;
@@ -224,11 +349,11 @@ export function Atmospheric3DChamber({
     window.addEventListener('mouseup', handleMouseUp);
     domElement.addEventListener('wheel', handleWheel, { passive: false });
 
-    // Resize Handler
+    // Window Resize Handler
     const handleResize = () => {
       if (!containerRef.current) return;
       const newW = containerRef.current.clientWidth;
-      const newH = containerRef.current.clientHeight || 340;
+      const newH = containerRef.current.clientHeight || 360;
       camera.aspect = newW / newH;
       camera.updateProjectionMatrix();
       renderer.setSize(newW, newH);
@@ -236,13 +361,16 @@ export function Atmospheric3DChamber({
 
     window.addEventListener('resize', handleResize);
 
-    // 8. Render Loop
+    // 10. 60 FPS Render & Physics Loop
     let angle = cameraRotationRef.current.y;
+    let clockTime = 0;
+
     const animate = () => {
       animFrameRef.current = requestAnimationFrame(animate);
+      clockTime += 0.016;
 
       if (isRotating && !isMouseDownRef.current) {
-        angle += 0.003;
+        angle += 0.0025;
         cameraRotationRef.current.y = angle;
       }
 
@@ -252,32 +380,59 @@ export function Atmospheric3DChamber({
       const yaw = cameraRotationRef.current.y;
 
       camera.position.x = Math.sin(yaw) * Math.cos(pitch) * dist;
-      camera.position.y = Math.sin(pitch) * dist + 4;
+      camera.position.y = Math.sin(pitch) * dist + 4.5;
       camera.position.z = Math.cos(yaw) * Math.cos(pitch) * dist;
-      camera.lookAt(0, 4, 0);
+      camera.lookAt(0, 4.0, 0);
 
-      // Animate Particles
-      if (particlesRef.current) {
-        const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
+      const windDrift = showWind ? 0.035 : 0.004;
+
+      // A. Animate Fine PM2.5 Micro-Aerosols (Brownian flutter + wind shear)
+      if (pm25ParticlesRef.current) {
+        const positions = pm25ParticlesRef.current.geometry.attributes.position.array as Float32Array;
+        const maxCeiling = showInversion ? inversionCeilingY : 15.5;
+
         for (let i = 0; i < positions.length; i += 3) {
-          positions[i] += velocityArray[i] + (showWind ? 0.02 : 0);
-          positions[i + 1] += velocityArray[i + 1];
-          positions[i + 2] += velocityArray[i + 2];
+          // Continuous Brownian micro-vibration
+          positions[i] += pm25Vel[i] + windDrift + Math.sin(clockTime * 2 + i) * 0.005;
+          positions[i + 1] += pm25Vel[i + 1] + Math.cos(clockTime * 1.5 + i) * 0.003;
+          positions[i + 2] += pm25Vel[i + 2] + Math.sin(clockTime * 1.8 + i) * 0.004;
 
           // Boundary wrap
-          if (positions[i] > 18) positions[i] = -18;
-          if (positions[i] < -18) positions[i] = 18;
-          if (positions[i + 1] > (showInversion ? 10.8 : 16)) positions[i + 1] = 0.5;
-          if (positions[i + 1] < 0.2) positions[i + 1] = 10;
-          if (positions[i + 2] > 18) positions[i + 2] = -18;
-          if (positions[i + 2] < -18) positions[i + 2] = 18;
+          if (positions[i] > 20) positions[i] = -20;
+          if (positions[i] < -20) positions[i] = 20;
+          if (positions[i + 1] > maxCeiling) positions[i + 1] = 0.6;
+          if (positions[i + 1] < 0.4) positions[i + 1] = maxCeiling * 0.95;
+          if (positions[i + 2] > 20) positions[i + 2] = -20;
+          if (positions[i + 2] < -20) positions[i + 2] = 20;
         }
-        particlesRef.current.geometry.attributes.position.needsUpdate = true;
+        pm25ParticlesRef.current.geometry.attributes.position.needsUpdate = true;
       }
 
-      // Rotate Inversion layer slightly
+      // B. Animate Coarse PM10 Dust (Sedimentation & street-level turbulence)
+      if (pm10ParticlesRef.current) {
+        const positions = pm10ParticlesRef.current.geometry.attributes.position.array as Float32Array;
+        for (let i = 0; i < positions.length; i += 3) {
+          positions[i] += pm10Vel[i] + windDrift * 0.8;
+          positions[i + 1] += pm10Vel[i + 1]; // Falling due to gravity
+          positions[i + 2] += pm10Vel[i + 2];
+
+          // Dust settles to ground and recirculates in urban eddies
+          if (positions[i + 1] < 0.25) {
+            positions[i + 1] = Math.random() * 5.0 + 0.5;
+            positions[i] = (Math.random() - 0.5) * 36;
+          }
+          if (positions[i] > 19) positions[i] = -19;
+          if (positions[i] < -19) positions[i] = 19;
+          if (positions[i + 2] > 19) positions[i + 2] = -19;
+          if (positions[i + 2] < -19) positions[i + 2] = 19;
+        }
+        pm10ParticlesRef.current.geometry.attributes.position.needsUpdate = true;
+      }
+
+      // Rotate Inversion Boundary Layer
       if (inversionRef.current) {
-        inversionRef.current.rotation.y += 0.001;
+        inversionRef.current.rotation.y += 0.0008;
+        inversionRef.current.position.y = inversionCeilingY;
         inversionRef.current.visible = showInversion;
       }
 
@@ -307,53 +462,55 @@ export function Atmospheric3DChamber({
       renderer.dispose();
       buildingMat.dispose();
       edgeMat.dispose();
-      beaconMat.dispose();
+      mastMat.dispose();
+      intakeMat.dispose();
       inversionMat.dispose();
-      particleMat.dispose();
+      pm25Mat.dispose();
+      pm10Mat.dispose();
+      sunMat.dispose();
     };
-  }, [effectiveAqi, isRotating, showInversion, showWind, getCategoryColor]);
+  }, [
+    effectiveAqi,
+    isRotating,
+    showInversion,
+    showWind,
+    showHumidity,
+    inversionCeilingY,
+    visibilityEstimate,
+    solarTransmissionPct,
+  ]);
 
-  // Reset Camera View
-  const handleResetCamera = () => {
-    cameraRotationRef.current = { x: 0.35, y: 0.5 };
-    zoomRef.current = 35;
-  };
+  const handleResetCamera = useCallback(() => {
+    cameraRotationRef.current = { x: 0.35, y: 0.6 };
+    zoomRef.current = 36;
+  }, []);
 
-  const aqiCategory = getCategoryLabel(effectiveAqi);
+  const aqiCategory = getCpcbLabel(effectiveAqi);
 
   return (
     <Card className={`border-border bg-card text-card-foreground shadow-sm overflow-hidden flex flex-col ${className}`}>
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 gap-3 border-b border-border/50">
+      {/* 3D Header & Atmospheric Controls */}
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 gap-3 border-b border-border/60">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <Box className="size-4 text-primary" />
+            <Box className="size-4 text-primary" aria-hidden="true" />
             <CardTitle className="text-sm font-semibold tracking-wide">
-              3D Atmospheric Micro-Climate & Particulate Chamber
+              3D Atmospheric Smog, Dust & Inversion Chamber
             </CardTitle>
             <Badge
               variant="outline"
-              className={`text-[10px] font-mono font-bold ${
-                effectiveAqi <= 100
-                  ? 'border-emerald-500/40 text-emerald-400'
-                  : effectiveAqi <= 200
-                  ? 'border-amber-500/40 text-amber-400'
-                  : effectiveAqi <= 300
-                  ? 'border-orange-500/40 text-orange-400'
-                  : effectiveAqi <= 400
-                  ? 'border-rose-500/40 text-rose-400'
-                  : 'border-purple-500/40 text-purple-400'
-              }`}
+              className="text-[10px] font-mono font-bold border-border text-foreground"
             >
               Simulated AQI: {effectiveAqi} • {aqiCategory}
             </Badge>
           </div>
           <CardDescription className="text-xs text-muted-foreground">
-            {stationName || `${cityName} Grid`} • Interactive WebGL aerosol suspension, wind vectors & thermal inversion simulation
+            {stationName || `${cityName} Grid`} • Koschmieder optical visibility extinction, dual particulate physics & solar scattering
           </CardDescription>
         </div>
 
-        {/* 3D Action Controls */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        {/* 3D Atmospheric Action Controls */}
+        <div className="flex flex-wrap items-center gap-1.5 shrink-0">
           <Button
             type="button"
             variant="outline"
@@ -372,12 +529,12 @@ export function Atmospheric3DChamber({
             size="sm"
             onClick={() => setShowInversion((prev) => !prev)}
             className={`h-7 px-2 text-xs gap-1 border-border ${
-              showInversion ? 'bg-accent text-accent-foreground' : 'bg-background'
+              showInversion ? 'bg-accent text-accent-foreground font-semibold' : 'bg-background text-muted-foreground'
             }`}
-            title="Toggle nocturnal thermal inversion boundary layer"
+            title="Toggle nocturnal thermal inversion capping layer"
           >
             <Layers className="size-3" />
-            <span className="hidden md:inline">Inversion</span>
+            <span className="hidden md:inline">Inversion ({inversionCeilingY * 40}m)</span>
           </Button>
 
           <Button
@@ -386,12 +543,26 @@ export function Atmospheric3DChamber({
             size="sm"
             onClick={() => setShowWind((prev) => !prev)}
             className={`h-7 px-2 text-xs gap-1 border-border ${
-              showWind ? 'bg-accent text-accent-foreground' : 'bg-background'
+              showWind ? 'bg-accent text-accent-foreground font-semibold' : 'bg-background text-muted-foreground'
             }`}
-            title="Toggle ambient wind vector dispersion"
+            title="Toggle ambient wind shear dispersion"
           >
             <Wind className="size-3" />
             <span className="hidden md:inline">Wind</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowHumidity((prev) => !prev)}
+            className={`h-7 px-2 text-xs gap-1 border-border ${
+              showHumidity ? 'bg-accent text-accent-foreground font-semibold' : 'bg-background text-muted-foreground'
+            }`}
+            title="Toggle high humidity / radiation fog condensation"
+          >
+            <Droplets className="size-3" />
+            <span className="hidden md:inline">Fog/Mist</span>
           </Button>
 
           <Button
@@ -412,28 +583,39 @@ export function Atmospheric3DChamber({
         {/* Three.js Canvas Container */}
         <div
           ref={containerRef}
-          className="w-full h-72 sm:h-80 cursor-grab active:cursor-grabbing bg-slate-950"
+          className="w-full h-72 sm:h-80 cursor-grab active:cursor-grabbing bg-[#090a0c]"
           style={{ touchAction: 'none' }}
         />
 
-        {/* Overlay HUD Badges */}
-        <div className="absolute bottom-2 left-3 flex flex-wrap items-center gap-2 pointer-events-none text-[10px] font-mono">
-          <span className="bg-background/80 backdrop-blur-md px-2 py-0.5 rounded border border-border/60 text-muted-foreground">
+        {/* Atmospheric Telemetry Badges (Swiss Cleanroom Style) */}
+        <div className="absolute bottom-2 left-3 flex flex-wrap items-center gap-2 pointer-events-none text-[10px] font-mono z-10">
+          <span className="subtle-glass px-2 py-0.5 rounded text-muted-foreground">
             Drag: Rotate • Wheel: Zoom
           </span>
-          <span className="bg-background/80 backdrop-blur-md px-2 py-0.5 rounded border border-border/60 text-foreground">
+          <span className="subtle-glass px-2 py-0.5 rounded text-foreground font-bold tabular-nums">
+            Visibility: {visibilityEstimate.distance} ({visibilityEstimate.rating})
+          </span>
+          <span className="subtle-glass px-2 py-0.5 rounded text-muted-foreground tabular-nums">
             PM2.5: {pm25} µg/m³ • PM10: {pm10} µg/m³
           </span>
           {simulatedReductionPct > 0 && (
             <span className="bg-primary/20 backdrop-blur-md px-2 py-0.5 rounded border border-primary/40 text-primary font-bold">
-              -{simulatedReductionPct}% Emission Policy Active
+              -{simulatedReductionPct}% Policy Attenuation
             </span>
           )}
         </div>
 
-        <div className="absolute top-2 right-3 pointer-events-none text-[10px] font-mono bg-background/80 backdrop-blur-md px-2 py-0.5 rounded border border-border/60 text-muted-foreground flex items-center gap-1">
-          <Eye className="size-3 text-primary" />
-          <span>60 FPS WebGL</span>
+        {/* Solar Transmission & WebGL Frame Indicator */}
+        <div className="absolute top-2 right-3 pointer-events-none text-[10px] font-mono subtle-glass px-2 py-0.5 rounded text-muted-foreground flex items-center gap-2 z-10">
+          <span className="flex items-center gap-1 text-amber-400 font-bold tabular-nums">
+            <Sun className="size-3" />
+            <span>Solar: {solarTransmissionPct}%</span>
+          </span>
+          <span>•</span>
+          <span className="flex items-center gap-1">
+            <Eye className="size-3 text-primary" />
+            <span>60 FPS WebGL</span>
+          </span>
         </div>
       </CardContent>
     </Card>

@@ -24,7 +24,9 @@ export function DiurnalTimelineScrubber({
   const [playbackSpeed, setPlaybackSpeed] = useState<1 | 2 | 4>(1);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const activeHourRef = useRef(activeHour);
-  activeHourRef.current = activeHour;
+  useEffect(() => {
+    activeHourRef.current = activeHour;
+  }, [activeHour]);
 
   // Auto-play loop
   useEffect(() => {
