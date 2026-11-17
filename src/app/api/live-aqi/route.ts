@@ -101,7 +101,7 @@ export async function GET(req: NextRequest) {
           const geoRes = await fetch(geoUrl, {
             signal: geoController.signal,
             headers: { 'Accept': 'application/json' },
-            next: { revalidate: 3600 }
+            next: { revalidate: 86400 }
           });
 
           clearTimeout(geoTimeout);
@@ -155,7 +155,7 @@ export async function GET(req: NextRequest) {
     const aqiRes = await fetch(aqiUrl, {
       signal: aqiController.signal,
       headers: { 'Accept': 'application/json' },
-      next: { revalidate: 60 }
+      next: { revalidate: 900 }
     });
 
     clearTimeout(aqiTimeout);
@@ -213,6 +213,10 @@ export async function GET(req: NextRequest) {
         time: currentTime
       },
       csvData
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=1800'
+      }
     });
   } catch (err: unknown) {
     const isAbort = err instanceof Error && err.name === 'AbortError';
