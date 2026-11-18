@@ -70,7 +70,7 @@ export function AtmosphericHeroViewport({
         <div className="flex flex-wrap items-center justify-between px-4 py-2.5 bg-[#0e1015]/90 backdrop-blur-md border-b border-border/60 gap-2 relative z-20">
           <div className="flex items-center gap-2 min-w-0">
             <div className="size-2 rounded-full bg-primary animate-ping shrink-0" />
-            <span className="text-xs sm:text-sm font-bold text-foreground tracking-wide flex items-center gap-1.5 truncate">
+            <span className="text-xs sm:text-sm font-bold text-foreground tracking-wide flex items-center gap-1.5 flex-wrap break-words">
               ATMOSPHERIC BRIEFING STUDIO
               <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
                 {viewportMode === '3d' ? '3D WebGL Particulate Engine' : 'Survey of India CAAQMS Grid'}

@@ -374,7 +374,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
           {latestTelemetry?.station && (
             <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-muted/40 text-muted-foreground border border-border flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
-              <span className="truncate max-w-[140px] sm:max-w-[200px]">
+              <span className="break-words">
                 {latestTelemetry.station}
               </span>
             </span>
@@ -506,7 +506,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
             return (
               <div className={`p-3 rounded-xl bg-muted/20 border ${status.borderClass} flex flex-col gap-1.5 min-w-0`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-foreground truncate">PM2.5</span>
+                  <span className="text-xs font-extrabold text-foreground break-words">PM2.5</span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass} shrink-0`}>
                     {status.label}
                   </span>
@@ -543,7 +543,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
             return (
               <div className={`p-3 rounded-xl bg-muted/20 border ${status.borderClass} flex flex-col gap-1.5 min-w-0`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-foreground truncate">PM10</span>
+                  <span className="text-xs font-extrabold text-foreground break-words">PM10</span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass} shrink-0`}>
                     {status.label}
                   </span>
@@ -580,7 +580,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
             return (
               <div className={`p-3 rounded-xl bg-muted/20 border ${status.borderClass} flex flex-col gap-1.5 min-w-0`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-foreground truncate">NO2</span>
+                  <span className="text-xs font-extrabold text-foreground break-words">NO2</span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass} shrink-0`}>
                     {status.label}
                   </span>
@@ -615,7 +615,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
             return (
               <div className={`p-3 rounded-xl bg-muted/20 border ${status.borderClass} flex flex-col gap-1.5 min-w-0`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-foreground truncate">SO2</span>
+                  <span className="text-xs font-extrabold text-foreground break-words">SO2</span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass} shrink-0`}>
                     {status.label}
                   </span>
@@ -648,7 +648,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
             return (
               <div className={`p-3 rounded-xl bg-muted/20 border ${status.borderClass} flex flex-col gap-1.5 min-w-0`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-foreground truncate">CO</span>
+                  <span className="text-xs font-extrabold text-foreground break-words">CO</span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass} shrink-0`}>
                     {status.label}
                   </span>
@@ -681,7 +681,7 @@ export const LiveTelemetryStudio: React.FC<LiveTelemetryStudioProps> = ({
             return (
               <div className={`p-3 rounded-xl bg-muted/20 border ${status.borderClass} flex flex-col gap-1.5 min-w-0`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-foreground truncate">O3</span>
+                  <span className="text-xs font-extrabold text-foreground break-words">O3</span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${status.chipClass} shrink-0`}>
                     {status.label}
                   </span>

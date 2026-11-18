@@ -38,9 +38,9 @@ const KpiMetricsComponent: React.FC<KpiMetricsProps> = ({ brief, onRowClick }) =
           <Flame className="w-4 h-4 text-rose-400" />
         </div>
         <div>
-          <div className="text-sm font-bold text-white flex items-center gap-1.5 line-clamp-1">
+          <div className="text-sm font-bold text-white flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-            <span className="truncate">{sum.peakLocation}</span>
+            <span className="break-words">{sum.peakLocation}</span>
           </div>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-2xl font-extrabold text-rose-400">AQI {sum.peakAQI}</span>
@@ -56,7 +56,7 @@ const KpiMetricsComponent: React.FC<KpiMetricsProps> = ({ brief, onRowClick }) =
         </div>
         <div className="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
           <Clock className="w-3 h-3 text-slate-500" />
-          <span className="truncate">Peak at: {sum.peakTimestamp}</span>
+          <span className="break-words">Peak at: {sum.peakTimestamp}</span>
         </div>
       </div>
 

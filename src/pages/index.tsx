@@ -449,7 +449,7 @@ ${note.complianceDirectives.map((d) => `- ${d}`).join('\n')}
             >
               <div className="flex items-center gap-2 min-w-0">
                 <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
-                <span className="truncate">{errorMsg}</span>
+                <span className="break-words">{errorMsg}</span>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button

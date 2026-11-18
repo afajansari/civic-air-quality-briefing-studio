@@ -88,11 +88,11 @@ export const ModernUtilityHeader: React.FC<ModernUtilityHeaderProps> = ({
 
           {/* Active Station Pill with Coordinates */}
           <div
-            className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-muted/50 text-foreground border border-border truncate"
+            className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-muted/50 text-foreground border border-border"
             title={`Active Station: ${currentStation}`}
           >
             <MapPin className="size-3 text-primary shrink-0" aria-hidden="true" />
-            <span className="font-semibold text-foreground truncate max-w-[150px]">
+            <span className="font-semibold text-foreground whitespace-nowrap">
               {currentStation || "Delhi CAAQMS"}
             </span>
             {coordinates && (

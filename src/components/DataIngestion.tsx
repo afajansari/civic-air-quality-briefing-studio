@@ -548,7 +548,7 @@ export const DataIngestion: React.FC<DataIngestionProps> = ({
                         <span className="text-[10px] text-slate-400 font-medium">{item.unit}</span>
                       </div>
                       <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-800/80 flex items-center justify-between">
-                        <span className="truncate max-w-[70px]">{item.name}</span>
+                        <span className="break-words">{item.name}</span>
                         <span className="text-slate-400 font-mono text-[9px]">{item.ref}</span>
                       </div>
                     </div>

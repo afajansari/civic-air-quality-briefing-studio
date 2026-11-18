@@ -170,7 +170,7 @@ export function PolicyScenarioSimulator({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <Sliders className="size-4 text-primary shrink-0" />
-            <CardTitle className="text-xs sm:text-sm font-bold tracking-wide truncate">
+            <CardTitle className="text-xs sm:text-sm font-bold tracking-wide leading-snug break-words">
               CPCB &quot;What-If&quot; Statutory Policy Simulator
             </CardTitle>
           </div>
@@ -234,7 +234,7 @@ export function PolicyScenarioSimulator({
             </Button>
           </div>
 
-          <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">
+          <span className="text-[10px] text-muted-foreground break-words hidden sm:inline">
             {cityName} urban airshed
           </span>
         </div>
@@ -244,7 +244,7 @@ export function PolicyScenarioSimulator({
         {/* Real-time Projected KPI Delta Strip */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
           <div className="rounded-lg border border-border/50 bg-muted/20 p-2 flex flex-col gap-0.5 min-w-0">
-            <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider truncate">
+            <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider break-words">
               Projected AQI
             </span>
             <div className="flex items-baseline gap-1">
@@ -260,7 +260,7 @@ export function PolicyScenarioSimulator({
           </div>
 
           <div className="rounded-lg border border-border/50 bg-muted/20 p-2 flex flex-col gap-0.5 min-w-0">
-            <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider truncate">
+            <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider break-words">
               Projected PM2.5
             </span>
             <div className="flex items-baseline gap-1">
@@ -272,7 +272,7 @@ export function PolicyScenarioSimulator({
           </div>
 
           <div className="rounded-lg border border-border/50 bg-muted/20 p-2 flex flex-col gap-0.5 min-w-0">
-            <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider truncate">
+            <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider break-words">
               Emissions Cut
             </span>
             <div className="flex items-baseline gap-1">
@@ -283,11 +283,11 @@ export function PolicyScenarioSimulator({
           </div>
 
           <div className="rounded-lg border border-border/50 bg-muted/20 p-2 flex flex-col gap-0.5 min-w-0">
-            <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider truncate">
+            <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider break-words">
               Statutory Stage
             </span>
             <div className="flex items-baseline gap-1">
-              <span className={`text-[10px] font-mono font-bold truncate ${simulationResults.projectedStageColor}`}>
+              <span className={`text-[10px] font-mono font-bold break-words ${simulationResults.projectedStageColor}`}>
                 {simulationResults.projectedStage}
               </span>
             </div>
@@ -299,9 +299,9 @@ export function PolicyScenarioSimulator({
           {/* 1. Vehicular Traffic */}
           <div className="flex flex-col gap-1 p-2 rounded-lg border border-border/40 bg-muted/10">
             <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1.5 font-semibold text-foreground truncate">
+              <span className="flex items-center gap-1.5 font-semibold text-foreground">
                 <Car className="size-3 text-sky-400 shrink-0" />
-                <span className="truncate">Vehicular Curb (Odd-Even)</span>
+                <span className="break-words">Vehicular Curb (Odd-Even)</span>
               </span>
               <span className="font-mono text-[11px] font-bold text-primary shrink-0 tabular-nums">
                 {trafficCut}%
@@ -325,9 +325,9 @@ export function PolicyScenarioSimulator({
           {/* 2. Construction & Demolition */}
           <div className="flex flex-col gap-1 p-2 rounded-lg border border-border/40 bg-muted/10">
             <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1.5 font-semibold text-foreground truncate">
+              <span className="flex items-center gap-1.5 font-semibold text-foreground">
                 <Hammer className="size-3 text-amber-400 shrink-0" />
-                <span className="truncate">C&D Dust Moratorium</span>
+                <span className="break-words">C&D Dust Moratorium</span>
               </span>
               <span className="font-mono text-[11px] font-bold text-primary shrink-0 tabular-nums">
                 {constructionHalt}%
@@ -351,9 +351,9 @@ export function PolicyScenarioSimulator({
           {/* 3. Industrial Scrubbing */}
           <div className="flex flex-col gap-1 p-2 rounded-lg border border-border/40 bg-muted/10">
             <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1.5 font-semibold text-foreground truncate">
+              <span className="flex items-center gap-1.5 font-semibold text-foreground">
                 <Factory className="size-3 text-orange-400 shrink-0" />
-                <span className="truncate">Industrial Gas Transition</span>
+                <span className="break-words">Industrial Gas Transition</span>
               </span>
               <span className="font-mono text-[11px] font-bold text-primary shrink-0 tabular-nums">
                 {industryScrubbing}%
@@ -377,9 +377,9 @@ export function PolicyScenarioSimulator({
           {/* 4. Mechanized Road Sweeping */}
           <div className="flex flex-col gap-1 p-2 rounded-lg border border-border/40 bg-muted/10">
             <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1.5 font-semibold text-foreground truncate">
+              <span className="flex items-center gap-1.5 font-semibold text-foreground">
                 <Droplets className="size-3 text-emerald-400 shrink-0" />
-                <span className="truncate">Anti-Smog Guns / Mist</span>
+                <span className="break-words">Anti-Smog Guns / Mist</span>
               </span>
               <span className="font-mono text-[11px] font-bold text-primary shrink-0 tabular-nums">
                 {dustSuppression}%
@@ -405,7 +405,7 @@ export function PolicyScenarioSimulator({
         <div className="p-2 rounded-lg border border-primary/20 bg-primary/5 flex items-center justify-between text-[11px] gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
             <Sparkles className="size-3.5 text-primary shrink-0" />
-            <span className="text-foreground truncate">
+            <span className="text-foreground break-words">
               {simulationResults.reductionPct > 0
                 ? `Averts ${simulationResults.aqiDelta} AQI index points.`
                 : 'Adjust levers to preview airshed clearance.'}

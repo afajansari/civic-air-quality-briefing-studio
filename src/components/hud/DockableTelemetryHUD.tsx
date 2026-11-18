@@ -103,9 +103,9 @@ export function DockableTelemetryHUD({
       aria-label="Dockable Telemetry HUD"
     >
       <div className="flex items-center justify-between px-3 py-2 border-b border-border/60 bg-[#090a0c]/50">
-        <div className="flex items-center gap-1.5 min-w-0">
+        <div className="flex items-center gap-1.5 min-w-0 pr-1">
           <Activity className="size-3.5 text-primary shrink-0" />
-          <span className="text-xs font-bold text-foreground truncate max-w-[140px]">
+          <span className="text-xs font-bold text-foreground leading-snug break-words">
             {currentStation || currentCity}
           </span>
         </div>

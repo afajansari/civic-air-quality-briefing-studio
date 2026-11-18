@@ -122,8 +122,8 @@ export function PollutantBreakdownChart({ currentTelemetry }: PollutantBreakdown
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <BarChart3 className="size-4 text-primary shrink-0" />
-            <CardTitle className="text-sm font-semibold tracking-wide truncate">
-              CPCB NAAQS Criteria Compliance
+            <CardTitle className="text-sm font-semibold tracking-wide leading-tight break-words">
+              CPCB NAAQS Criteria Standard Compliance
             </CardTitle>
           </div>
 
@@ -142,8 +142,8 @@ export function PollutantBreakdownChart({ currentTelemetry }: PollutantBreakdown
           </div>
         </div>
 
-        <CardDescription className="text-xs text-muted-foreground truncate">
-          Current concentration relative to Indian statutory 24-hr safe limits (100% = Standard)
+        <CardDescription className="text-xs text-muted-foreground leading-relaxed break-words">
+          Current concentration relative to Indian statutory 24-hr safe exposure limits (100% = Threshold)
         </CardDescription>
       </CardHeader>
 
@@ -212,8 +212,8 @@ export function PollutantBreakdownChart({ currentTelemetry }: PollutantBreakdown
               key={d.pollutant}
               className="flex flex-col items-center justify-center p-1.5 rounded-lg bg-muted/20 border border-border/40 text-center gap-0.5 min-w-0"
             >
-              <span className="font-extrabold text-foreground truncate">{d.pollutant}</span>
-              <span className="text-muted-foreground tabular-nums text-[9px] truncate">
+              <span className="font-extrabold text-foreground">{d.pollutant}</span>
+              <span className="text-muted-foreground tabular-nums text-[9px] whitespace-nowrap">
                 {d.value} {d.unit}
               </span>
               <span

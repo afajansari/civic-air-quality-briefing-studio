@@ -124,7 +124,7 @@ export function AirQualityTrendChart({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <Activity className="size-4 text-primary shrink-0" />
-            <CardTitle className="text-sm font-semibold tracking-wide truncate">
+            <CardTitle className="text-sm font-semibold tracking-wide leading-tight break-words">
               Diurnal Telemetry & CPCB Concentration Curves
             </CardTitle>
           </div>
@@ -141,7 +141,7 @@ export function AirQualityTrendChart({
 
         {/* Row 2: Subtitle Description & Time Horizon Toggles */}
         <div className="flex items-center justify-between gap-2 pt-0.5">
-          <CardDescription className="text-xs text-muted-foreground truncate">
+          <CardDescription className="text-xs text-muted-foreground leading-relaxed break-words">
             {stationName || city} • Criteria particulate curves
           </CardDescription>
 
@@ -175,7 +175,7 @@ export function AirQualityTrendChart({
         {/* KPI Strip with stable proportions */}
         <div className="grid grid-cols-3 gap-2 py-0.5">
           <div className="rounded-md border border-border/40 bg-muted/20 p-2 flex flex-col gap-0.5 min-w-0">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold truncate">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold break-words">
               Peak PM2.5
             </span>
             <div className="flex items-baseline gap-1">
@@ -185,7 +185,7 @@ export function AirQualityTrendChart({
           </div>
 
           <div className="rounded-md border border-border/40 bg-muted/20 p-2 flex flex-col gap-0.5 min-w-0">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold truncate">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold break-words">
               Avg PM2.5
             </span>
             <div className="flex items-baseline gap-1">
@@ -195,7 +195,7 @@ export function AirQualityTrendChart({
           </div>
 
           <div className="rounded-md border border-border/40 bg-muted/20 p-2 flex flex-col gap-0.5 min-w-0">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold truncate">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold break-words">
               Peak PM10
             </span>
             <div className="flex items-baseline gap-1">
@@ -304,7 +304,7 @@ export function AirQualityTrendChart({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-muted-foreground pt-1.5 border-t border-border/40 gap-1">
           <div className="flex items-center gap-1.5 min-w-0">
             <TrendingUp className="size-3 text-primary shrink-0" />
-            <span className="truncate">Diurnal peak during nocturnal inversion (22:00 - 06:00 IST)</span>
+            <span className="break-words">Diurnal peak during nocturnal inversion (22:00 - 06:00 IST)</span>
           </div>
           <span className="font-mono text-[10px] shrink-0 text-muted-foreground/80">Source: CPCB CAAQMS Grid</span>
         </div>

@@ -385,7 +385,7 @@ export const StreamingBriefTerminal: React.FC<StreamingBriefTerminalProps> = ({
                 comparison.aqiTrend === 'worsening' ? 'text-rose-400' : 'text-emerald-400'
               }`}
             />
-            <span className="font-bold text-white truncate">
+            <span className="font-bold text-white break-words">
               {comparison.changeSummaryText || 'Comparison with previous brief recorded.'}
             </span>
           </div>
